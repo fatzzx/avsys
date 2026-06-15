@@ -1,0 +1,159 @@
+services:
+  # ── Infrastructure ───────────────────────────────────────────────────────────
+
+  redis:
+    image: redis:7-alpine
+    container_name: airline-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - airline-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: airline-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - airline-internal
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # ── Microservices ─────────────────────────────────────────────────────────────
+  # Para escalar horizontalmente, use: docker compose up --scale flight-catalog=2
+  # (requer banco externo em produção; SQLite é local por contêiner)
+
+  flight-catalog:
+    build:
+      context: ./services/flight-catalog
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3001"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      DB_PATH: /app/data/flights.db
+    volumes:
+      - flights_db:/app/data
+    networks:
+      - airline-public
+      - airline-internal
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  reservation-service:
+    build:
+      context: ./services/reservation-service
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3002"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      DB_PATH: /app/data/reservations.db
+    volumes:
+      - reservations_db:/app/data
+    networks:
+      - airline-public
+      - airline-internal
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3002/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3003"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      DB_PATH: /app/data/payments.db
+    volumes:
+      - payments_db:/app/data
+    networks:
+      - airline-public
+      - airline-internal
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3003/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ── API Gateway ───────────────────────────────────────────────────────────────
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: airline-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    networks:
+      - airline-public
+    depends_on:
+      flight-catalog:
+        condition: service_healthy
+      reservation-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  airline-public:
+    driver: bridge
+  airline-internal:
+    driver: bridge
+
+volumes:
+  redis_data:
+  rabbitmq_data:
+  flights_db:
+  reservations_db:
+  payments_db:

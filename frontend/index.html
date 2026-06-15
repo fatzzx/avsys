@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AVSYS — Reserva de Passagens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Share+Tech&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #070b14;
+      --bg2:      #0d1424;
+      --bg3:      #111b2e;
+      --border:   #1e3050;
+      --text:     #c8ad7a;
+      --text-dim: #5a6a7a;
+      --amber:    #f0a030;
+      --green:    #3ddc84;
+      --red:      #f05050;
+      --blue:     #4aa8f0;
+      --white:    #e8dfc8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,.08) 2px,
+        rgba(0,0,0,.08) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: var(--bg2);
+    }
+    .logo {
+      font-size: 22px;
+      color: var(--amber);
+      letter-spacing: 6px;
+      text-shadow: 0 0 20px rgba(240,160,48,.4);
+    }
+    .logo span { color: var(--text-dim); font-size: 12px; letter-spacing: 2px; display: block; margin-top: -2px; }
+    .status-bar {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      display: flex;
+      gap: 20px;
+    }
+    .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Layout ── */
+    main { padding: 24px 32px; display: flex; flex-direction: column; gap: 20px; max-width: 1100px; }
+
+    /* ── Panel ── */
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .panel-header {
+      padding: 8px 16px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-header::before { content: '▸'; color: var(--text-dim); }
+    .panel-body { padding: 16px; }
+
+    /* ── Search ── */
+    .search-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); }
+    .field input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      padding: 8px 12px;
+      width: 120px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .field input:focus { border-color: var(--amber); }
+    .field input[type="date"] { width: 160px; color-scheme: dark; }
+
+    button {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      padding: 9px 20px;
+      cursor: pointer;
+      border: 1px solid var(--amber);
+      background: transparent;
+      color: var(--amber);
+      transition: background .15s, color .15s;
+    }
+    button:hover { background: var(--amber); color: var(--bg); }
+    button:disabled { opacity: .3; cursor: default; }
+    button.primary { border-color: var(--green); color: var(--green); }
+    button.primary:hover { background: var(--green); color: var(--bg); }
+    button.danger { border-color: var(--red); color: var(--red); }
+    button.danger:hover { background: var(--red); color: var(--bg); }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--border); }
+    th { padding: 8px 12px; text-align: left; font-size: 10px; letter-spacing: 2px; color: var(--text-dim); font-weight: normal; }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(30,48,80,.5); }
+    tbody tr { cursor: pointer; transition: background .1s; }
+    tbody tr:hover { background: var(--bg3); }
+    tbody tr.active { background: rgba(240,160,48,.08); border-left: 2px solid var(--amber); }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 11px;
+      border: 1px solid currentColor;
+      letter-spacing: 1px;
+    }
+    .tag.economy  { color: var(--text-dim); }
+    .tag.business { color: var(--blue); }
+    .tag.first    { color: var(--amber); }
+    .price { color: var(--white); }
+
+    /* ── Seat map ── */
+    .seat-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .seat-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .seat-row-label {
+      width: 28px;
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: right;
+    }
+    .seat-aisle { width: 20px; }
+    .seat {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s;
+      letter-spacing: 0;
+      position: relative;
+    }
+    .seat.available  { border-color: var(--green); color: var(--green); }
+    .seat.available:hover { background: rgba(61,220,132,.15); }
+    .seat.reserved   { border-color: var(--border); color: var(--text-dim); cursor: not-allowed; background: rgba(0,0,0,.3); }
+    .seat.sold       { border-color: var(--border); color: var(--text-dim); cursor: not-allowed; background: rgba(0,0,0,.3); }
+    .seat.selected   { border-color: var(--amber); color: var(--bg); background: var(--amber); }
+
+    .seat-legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-box  { width: 12px; height: 12px; border: 1px solid; }
+    .legend-box.available { border-color: var(--green); }
+    .legend-box.reserved  { border-color: var(--border); background: rgba(0,0,0,.3); }
+    .legend-box.selected  { border-color: var(--amber); background: var(--amber); }
+
+    .seat-class-section { margin-bottom: 16px; }
+    .seat-class-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .seat-class-label.first    { color: var(--amber); border-color: rgba(240,160,48,.3); }
+    .seat-class-label.business { color: var(--blue);  border-color: rgba(74,168,240,.3); }
+
+    /* ── Booking panel ── */
+    .booking-summary {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .booking-field { display: flex; flex-direction: column; gap: 3px; }
+    .booking-field span:first-child { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); }
+    .booking-field span:last-child  { font-size: 16px; color: var(--white); }
+
+    .booking-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .field input.user-id { width: 220px; }
+
+    /* ── Status ── */
+    .status-panel {
+      padding: 16px;
+      border-left: 3px solid var(--text-dim);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .status-panel.pending   { border-color: var(--amber); }
+    .status-panel.confirmed { border-color: var(--green); }
+    .status-panel.cancelled { border-color: var(--red);   }
+    .status-icon { font-size: 20px; }
+    .status-detail { display: flex; flex-direction: column; gap: 3px; }
+    .status-detail strong { color: var(--white); }
+    .status-detail small   { color: var(--text-dim); font-size: 11px; letter-spacing: 1px; }
+
+    /* ── Misc ── */
+    .empty { padding: 24px; text-align: center; color: var(--text-dim); letter-spacing: 2px; font-size: 12px; }
+    .spinner::after { content: ''; animation: spin .8s linear infinite; display: inline-block; }
+    @keyframes spin { to { content: '|'; } }
+
+    .hidden { display: none !important; }
+
+    .blink { animation: blink 1.2s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .ticker {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      overflow: hidden;
+      white-space: nowrap;
+      border-top: 1px solid var(--border);
+      padding: 6px 32px;
+      background: var(--bg);
+    }
+
+    /* fade in */
+    .fade { animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    ✈ AVSYS
+    <span>SISTEMA DISTRIBUÍDO DE RESERVAS</span>
+  </div>
+  <a href="/architecture.html" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--text-dim);text-decoration:none;border:1px solid var(--border);padding:5px 12px;transition:color .2s,border-color .2s" onmouseover="this.style.color='var(--amber)';this.style.borderColor='var(--amber)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">ARQUITETURA →</a>
+  <div class="status-bar">
+    <span><span class="dot"></span>REDIS</span>
+    <span><span class="dot"></span>RABBITMQ</span>
+    <span><span class="dot"></span>NGINX</span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<main>
+
+  <!-- BUSCA -->
+  <div class="panel">
+    <div class="panel-header">CONSULTA DE VOOS</div>
+    <div class="panel-body">
+      <div class="search-row">
+        <div class="field">
+          <label>ORIGEM</label>
+          <input id="origin" type="text" value="GRU" maxlength="3" placeholder="GRU">
+        </div>
+        <div class="field">
+          <label>DESTINO</label>
+          <input id="destination" type="text" value="GIG" maxlength="3" placeholder="GIG">
+        </div>
+        <div class="field">
+          <label>DATA</label>
+          <input id="date" type="date" value="2026-08-15">
+        </div>
+        <div class="field">
+          <label>CLASSE</label>
+          <select id="class" style="background:var(--bg);border:1px solid var(--border);color:var(--white);font-family:'Share Tech Mono',monospace;font-size:14px;padding:8px 12px;outline:none;width:130px;color-scheme:dark;">
+            <option value="">TODAS</option>
+            <option value="economy">ECONOMY</option>
+            <option value="business">BUSINESS</option>
+            <option value="first">FIRST</option>
+          </select>
+        </div>
+        <button onclick="searchFlights()">BUSCAR ▸</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="panel" id="results-panel" class="hidden">
+    <div class="panel-header">VOOS DISPONÍVEIS</div>
+    <div class="panel-body" style="padding:0">
+      <div id="flights-list"><div class="empty">— AGUARDANDO CONSULTA —</div></div>
+    </div>
+  </div>
+
+  <!-- MAPA DE ASSENTOS -->
+  <div class="panel hidden" id="seats-panel">
+    <div class="panel-header" id="seats-title">MAPA DE ASSENTOS</div>
+    <div class="panel-body">
+      <div id="seats-content"></div>
+    </div>
+  </div>
+
+  <!-- BOOKING -->
+  <div class="panel hidden" id="booking-panel">
+    <div class="panel-header">CONFIRMAR RESERVA</div>
+    <div class="panel-body">
+      <div class="booking-summary" id="booking-summary"></div>
+      <div class="booking-row">
+        <div class="field">
+          <label>ID DO PASSAGEIRO</label>
+          <input id="user-id" class="user-id" type="text" placeholder="usuario-1" value="usuario-1">
+        </div>
+        <button class="primary" onclick="createReservation()">CONFIRMAR RESERVA ▸</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="panel hidden" id="status-panel">
+    <div class="panel-header">STATUS DA RESERVA</div>
+    <div class="panel-body" style="padding:0">
+      <div id="status-content"></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="ticker" id="ticker">
+  SISTEMA DISTRIBUÍDO DE RESERVAS DE PASSAGENS &nbsp;·&nbsp; LOCKS REDIS ATIVOS &nbsp;·&nbsp; RABBITMQ ONLINE &nbsp;·&nbsp; SQLITE WAL MODE &nbsp;·&nbsp; 3 MICROSSERVIÇOS ATIVOS
+</div>
+
+<script>
+  // ── Estado ──────────────────────────────────────────────────────────────────
+  let selectedFlight  = null
+  let selectedSeat    = null
+  let pollTimer       = null
+
+  // ── Relógio ─────────────────────────────────────────────────────────────────
+  function updateClock() {
+    const now = new Date()
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('pt-BR', { hour12: false }) + ' UTC-3'
+  }
+  setInterval(updateClock, 1000)
+  updateClock()
+
+  // ── Buscar voos ─────────────────────────────────────────────────────────────
+  async function searchFlights() {
+    const origin      = document.getElementById('origin').value.trim().toUpperCase()
+    const destination = document.getElementById('destination').value.trim().toUpperCase()
+    const date        = document.getElementById('date').value
+    const cls         = document.getElementById('class').value
+
+    if (!origin || !destination || !date) return
+
+    resetBelow('results')
+
+    const list = document.getElementById('flights-list')
+    list.innerHTML = '<div class="empty blink">CONSULTANDO...</div>'
+    show('results-panel')
+
+    const qs = new URLSearchParams({ origin, destination, date })
+    if (cls) qs.set('class', cls)
+
+    try {
+      const res   = await fetch(`/api/flights/search?${qs}`)
+      const data  = await res.json()
+
+      if (!Array.isArray(data) || data.length === 0) {
+        list.innerHTML = '<div class="empty">— NENHUM VOO ENCONTRADO —</div>'
+        return
+      }
+
+      list.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>VOO</th>
+              <th>COMPANHIA</th>
+              <th>SAÍDA</th>
+              <th>CHEGADA</th>
+              <th>ASSENTOS DISP.</th>
+              <th>PREÇO BASE</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(f => `
+              <tr onclick="selectFlight(${JSON.stringify(f).replace(/"/g,'&quot;')})" id="row-${f.id}">
+                <td>${f.flight_number}</td>
+                <td>${f.airline_name}</td>
+                <td>${fmtTime(f.departure_at)}</td>
+                <td>${fmtTime(f.arrival_at)}</td>
+                <td style="color:${f.available_seats > 0 ? 'var(--green)' : 'var(--red)'}">
+                  ${f.available_seats}
+                </td>
+                <td class="price">R$ ${Number(f.base_price).toFixed(2)}</td>
+                <td style="color:var(--amber)">▸</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `
+    } catch (e) {
+      list.innerHTML = `<div class="empty">ERRO: ${e.message}</div>`
+    }
+  }
+
+  // ── Selecionar voo ──────────────────────────────────────────────────────────
+  async function selectFlight(flight) {
+    selectedFlight = flight
+    selectedSeat   = null
+
+    document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('active'))
+    const row = document.getElementById('row-' + flight.id)
+    if (row) row.classList.add('active')
+
+    resetBelow('seats')
+    show('seats-panel')
+
+    const title   = document.getElementById('seats-title')
+    const content = document.getElementById('seats-content')
+    title.textContent = `▸ MAPA DE ASSENTOS — ${flight.flight_number} · ${fmtTime(flight.departure_at)}`
+    content.innerHTML = '<div class="empty blink">CARREGANDO MAPA...</div>'
+
+    try {
+      const res   = await fetch(`/api/flights/${flight.id}/seats`)
+      const seats = await res.json()
+
+      if (!Array.isArray(seats) || seats.length === 0) {
+        content.innerHTML = '<div class="empty">— SEM ASSENTOS —</div>'
+        return
+      }
+
+      renderSeatMap(seats, content)
+    } catch (e) {
+      content.innerHTML = `<div class="empty">ERRO: ${e.message}</div>`
+    }
+  }
+
+  // ── Renderizar mapa de assentos ─────────────────────────────────────────────
+  function renderSeatMap(seats, container) {
+    const byClass = { first: [], business: [], economy: [] }
+    for (const s of seats) byClass[s.seat_class]?.push(s)
+
+    const classLabels = { first: 'PRIMEIRA CLASSE', business: 'EXECUTIVA', economy: 'ECONÔMICA' }
+    let html = '<div class="fade">'
+
+    for (const cls of ['first', 'business', 'economy']) {
+      const group = byClass[cls]
+      if (!group.length) continue
+
+      html += `<div class="seat-class-section">
+        <div class="seat-class-label ${cls}">${classLabels[cls]}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">`
+
+      for (const s of group) {
+        const statusClass = s.status === 'available' ? 'available' : 'reserved'
+        const title = `${s.seat_number} · ${s.seat_class.toUpperCase()} · ${s.status.toUpperCase()}`
+        html += `<div
+          class="seat ${statusClass}"
+          id="seat-${s.id}"
+          title="${title}"
+          ${s.status === 'available' ? `onclick="selectSeat(${JSON.stringify(s).replace(/"/g,'&quot;')})"` : ''}
+        >${s.seat_number}</div>`
+      }
+
+      html += `</div></div>`
+    }
+
+    html += `<div class="seat-legend">
+      <div class="legend-item"><div class="legend-box available"></div>DISPONÍVEL</div>
+      <div class="legend-item"><div class="legend-box reserved"></div>OCUPADO</div>
+      <div class="legend-item"><div class="legend-box selected"></div>SELECIONADO</div>
+    </div></div>`
+
+    container.innerHTML = html
+  }
+
+  // ── Selecionar assento ──────────────────────────────────────────────────────
+  function selectSeat(seat) {
+    if (selectedSeat) {
+      const prev = document.getElementById('seat-' + selectedSeat.id)
+      if (prev) { prev.classList.remove('selected'); prev.classList.add('available') }
+    }
+    selectedSeat = seat
+    const el = document.getElementById('seat-' + seat.id)
+    if (el) { el.classList.remove('available'); el.classList.add('selected') }
+
+    show('booking-panel')
+    resetBelow('booking')
+
+    const classLabel = { first: 'PRIMEIRA CLASSE', business: 'EXECUTIVA', economy: 'ECONÔMICA' }
+    document.getElementById('booking-summary').innerHTML = `
+      <div class="booking-field">
+        <span>VOO</span>
+        <span>${selectedFlight.flight_number}</span>
+      </div>
+      <div class="booking-field">
+        <span>ASSENTO</span>
+        <span>${seat.seat_number}</span>
+      </div>
+      <div class="booking-field">
+        <span>CLASSE</span>
+        <span>${classLabel[seat.seat_class] || seat.seat_class}</span>
+      </div>
+      <div class="booking-field">
+        <span>VALOR</span>
+        <span>R$ ${Number(selectedFlight.base_price).toFixed(2)}</span>
+      </div>
+      <div class="booking-field">
+        <span>SAÍDA</span>
+        <span>${fmtTime(selectedFlight.departure_at)}</span>
+      </div>
+    `
+    document.getElementById('booking-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
+  // ── Criar reserva ───────────────────────────────────────────────────────────
+  async function createReservation() {
+    const userId = document.getElementById('user-id').value.trim()
+    if (!userId) { alert('Informe o ID do passageiro.'); return }
+    if (!selectedFlight || !selectedSeat) return
+
+    show('status-panel')
+    setStatus('pending', 'PROCESSANDO...', 'Enviando reserva e aguardando lock Redis...')
+
+    try {
+      const res  = await fetch('/api/reservations/', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id:     userId,
+          flight_id:   selectedFlight.id,
+          seat_id:     selectedSeat.id,
+          total_price: selectedFlight.base_price,
+        }),
+      })
+      const data = await res.json()
+
+      if (res.status === 409) {
+        setStatus('cancelled', 'ASSENTO INDISPONÍVEL', data.message || data.error)
+        return
+      }
+      if (!res.ok) {
+        setStatus('cancelled', 'ERRO', data.error || 'Falha ao criar reserva.')
+        return
+      }
+
+      // Assento ficou reserved visualmente
+      const seatEl = document.getElementById('seat-' + selectedSeat.id)
+      if (seatEl) { seatEl.classList.remove('selected','available'); seatEl.classList.add('reserved') }
+
+      setStatus('pending', `RESERVA #${data.reservation_id.slice(0,8).toUpperCase()}`,
+        'Pagamento em processamento via RabbitMQ...')
+
+      pollStatus(data.reservation_id)
+    } catch (e) {
+      setStatus('cancelled', 'ERRO DE CONEXÃO', e.message)
+    }
+  }
+
+  // ── Polling de status ────────────────────────────────────────────────────────
+  async function pollStatus(id) {
+    if (pollTimer) clearInterval(pollTimer)
+    let tries = 0
+
+    pollTimer = setInterval(async () => {
+      tries++
+      try {
+        const res  = await fetch(`/api/reservations/${id}`)
+        const data = await res.json()
+
+        if (data.status === 'confirmed') {
+          clearInterval(pollTimer)
+          setStatus('confirmed', `CONFIRMADA ✓`, `Reserva #${id.slice(0,8).toUpperCase()} confirmada. Pagamento aprovado.`)
+        } else if (data.status === 'cancelled') {
+          clearInterval(pollTimer)
+          setStatus('cancelled', 'CANCELADA ✗', 'Pagamento recusado. O assento foi liberado.')
+          // Libera assento visualmente
+          const seatEl = document.getElementById('seat-' + selectedSeat?.id)
+          if (seatEl) { seatEl.classList.remove('reserved','selected'); seatEl.classList.add('available') }
+        } else if (tries > 20) {
+          clearInterval(pollTimer)
+          setStatus('pending', 'AGUARDANDO...', 'Processamento demorado. Verifique o RabbitMQ.')
+        }
+      } catch {}
+    }, 1500)
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  function setStatus(type, title, detail) {
+    const icons = { pending: '⏳', confirmed: '✈', cancelled: '✖' }
+    document.getElementById('status-content').innerHTML = `
+      <div class="status-panel ${type} fade">
+        <span class="status-icon">${icons[type]}</span>
+        <div class="status-detail">
+          <strong>${title}</strong>
+          <small>${detail}</small>
+        </div>
+      </div>
+    `
+  }
+
+  function show(id) {
+    document.getElementById(id)?.classList.remove('hidden')
+  }
+
+  function resetBelow(level) {
+    if (level === 'results') {
+      hide('seats-panel'); hide('booking-panel'); hide('status-panel')
+      selectedFlight = null; selectedSeat = null
+    }
+    if (level === 'seats') {
+      hide('booking-panel'); hide('status-panel')
+      selectedSeat = null
+    }
+    if (level === 'booking') {
+      hide('status-panel')
+    }
+  }
+
+  function hide(id) { document.getElementById(id)?.classList.add('hidden') }
+
+  function fmtTime(iso) {
+    if (!iso) return '—'
+    return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  }
+
+  // Carrega ao abrir
+  searchFlights()
+</script>
+</body>
+</html>

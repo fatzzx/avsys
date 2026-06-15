@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AVSYS — Arquitetura em Tempo Real</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Share+Tech&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #070b14;
+      --bg2:      #0d1424;
+      --bg3:      #111b2e;
+      --border:   #1e3050;
+      --text:     #c8ad7a;
+      --text-dim: #5a6a7a;
+      --amber:    #f0a030;
+      --green:    #3ddc84;
+      --red:      #f05050;
+      --blue:     #4aa8f0;
+      --white:    #e8dfc8;
+      /* node colors */
+      --col-nginx:       #f0a030;
+      --col-catalog:     #4aa8f0;
+      --col-reservation: #3ddc84;
+      --col-payment:     #a87fff;
+      --col-redis:       #f05050;
+      --col-rabbitmq:    #ff8c42;
+      --col-client:      #8899aa;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    /* scanlines */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: var(--bg2);
+      height: 54px;
+    }
+    .logo {
+      font-size: 18px;
+      color: var(--amber);
+      letter-spacing: 5px;
+      text-shadow: 0 0 16px rgba(240,160,48,.4);
+    }
+    .logo-sub { color: var(--text-dim); font-size: 10px; letter-spacing: 2px; }
+    .nav-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 1px;
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      transition: color .2s, border-color .2s;
+    }
+    .nav-link:hover { color: var(--amber); border-color: var(--amber); }
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--green);
+      letter-spacing: 1px;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+    #clock { letter-spacing: 2px; }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex;
+      gap: 1px;
+      background: var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-cell {
+      flex: 1;
+      background: var(--bg2);
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stat-label { color: var(--text-dim); font-size: 10px; letter-spacing: 1px; }
+    .stat-value { color: var(--white); font-size: 16px; }
+    .stat-unit  { color: var(--text-dim); font-size: 10px; }
+
+    /* ── Main layout ── */
+    .main-area {
+      display: flex;
+      height: calc(100vh - 54px - 37px);
+    }
+
+    /* ── Diagram panel ── */
+    .diagram-panel {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    /* subtle grid background */
+    .diagram-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    #arch-svg {
+      width: 100%;
+      max-width: 640px;
+      height: auto;
+      overflow: visible;
+    }
+
+    /* SVG node rects */
+    .node-rect {
+      rx: 4;
+      ry: 4;
+      stroke-width: 1.5;
+      fill: var(--bg3);
+      transition: filter .3s;
+    }
+    .node-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      fill: var(--white);
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+    .node-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      fill: var(--text-dim);
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+    .node-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+
+    /* connection lines */
+    .conn-line {
+      fill: none;
+      stroke-width: 1.5;
+      stroke: var(--border);
+      stroke-dasharray: 6 4;
+      opacity: .55;
+    }
+    .conn-line.active { stroke-dasharray: none; opacity: .7; }
+
+    /* data-flow animation on lines */
+    .conn-flow {
+      fill: none;
+      stroke-width: 1.5;
+      stroke-dasharray: 8 3;
+      opacity: 0;
+    }
+    .conn-flow.flowing {
+      opacity: .35;
+      animation: dashflow 1.2s linear infinite;
+    }
+    @keyframes dashflow { to { stroke-dashoffset: -44; } }
+
+    /* health indicator dots on nodes */
+    .health-dot {
+      r: 4;
+      transition: fill .5s;
+    }
+
+    /* ── Event log panel ── */
+    .log-panel {
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .log-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .log-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+      display: flex;
+      flex-direction: column-reverse;
+    }
+    .log-scroll::-webkit-scrollbar { width: 4px; }
+    .log-scroll::-webkit-scrollbar-track { background: var(--bg); }
+    .log-scroll::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .log-entry {
+      display: grid;
+      grid-template-columns: 78px 130px 1fr;
+      gap: 0 8px;
+      padding: 4px 14px;
+      border-bottom: 1px solid rgba(30,48,80,.4);
+      animation: fadein .3s ease-out;
+    }
+    .log-entry:hover { background: var(--bg2); }
+    @keyframes fadein { from { opacity:0; transform: translateX(8px); } to { opacity:1; transform:none; } }
+
+    .log-time  { color: var(--text-dim); font-size: 10px; }
+    .log-type  { font-size: 10px; letter-spacing: .5px; }
+    .log-label { color: var(--text-dim); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Legend */
+    .legend {
+      border-top: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    /* node glow classes (toggled by JS) */
+    .glow-reservation { filter: drop-shadow(0 0 8px var(--col-reservation)); }
+    .glow-redis       { filter: drop-shadow(0 0 8px var(--col-redis)); }
+    .glow-rabbitmq    { filter: drop-shadow(0 0 8px var(--col-rabbitmq)); }
+    .glow-payment     { filter: drop-shadow(0 0 8px var(--col-payment)); }
+    .glow-catalog     { filter: drop-shadow(0 0 8px var(--col-catalog)); }
+    .glow-nginx       { filter: drop-shadow(0 0 8px var(--col-nginx)); }
+    .glow-client      { filter: drop-shadow(0 0 8px var(--col-client)); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">AVSYS</div>
+    <div class="logo-sub">DISTRIBUTED SYSTEMS</div>
+  </div>
+  <a href="/" class="nav-link">← RESERVAS</a>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE
+    </div>
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<div class="stats-row">
+  <div class="stat-cell">
+    <span class="stat-label">EVENTOS LOG</span>
+    <span class="stat-value" id="stat-total">0</span>
+  </div>
+  <div class="stat-cell">
+    <span class="stat-label">EVENTOS/MIN</span>
+    <span class="stat-value" id="stat-rate">0</span>
+    <span class="stat-unit">rpm</span>
+  </div>
+  <div class="stat-cell">
+    <span class="stat-label">RESERVAS ATIVAS</span>
+    <span class="stat-value" id="stat-flows">0</span>
+  </div>
+  <div class="stat-cell">
+    <span class="stat-label">SERVIÇOS</span>
+    <span class="stat-value" id="stat-services" style="color:var(--green)">—</span>
+    <span class="stat-unit">/ 3</span>
+  </div>
+</div>
+
+<div class="main-area">
+
+  <!-- ── Architecture diagram ── -->
+  <div class="diagram-panel">
+    <svg id="arch-svg" viewBox="0 0 590 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="var(--border)" opacity=".6"/>
+        </marker>
+        <!-- glow filters -->
+        <filter id="gf-amber" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="gf-green" x="-40%" y="-40%" width="180%" height="180%">
+          <feColorMatrix type="matrix" values="0 0 0 0 0.24  0 0 0 0 0.86  0 0 0 0 0.52  0 0 0 1 0" result="colored"/>
+          <feGaussianBlur in="colored" stdDeviation="5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- ── Connection paths (drawn first, under nodes) ── -->
+
+      <!-- base connection lines (dashed) -->
+      <path id="p-client-nginx"        class="conn-line" d="M295,53 L295,98"/>
+      <path id="p-nginx-catalog"       class="conn-line" d="M237,138 C195,167 128,196 88,223"/>
+      <path id="p-nginx-reservation"   class="conn-line" d="M295,138 L295,222"/>
+      <path id="p-nginx-payment"       class="conn-line" d="M353,138 C393,167 462,196 502,223"/>
+      <path id="p-catalog-redis"       class="conn-line" d="M88,273 L88,368"/>
+      <path id="p-reservation-redis"   class="conn-line" d="M242,270 C192,308 128,344 88,368"/>
+      <path id="p-reservation-rabbitmq"class="conn-line" d="M348,270 C398,308 462,344 502,368"/>
+      <path id="p-payment-rabbitmq"    class="conn-line" d="M502,273 L502,368"/>
+
+      <!-- flowing animation overlays (same paths, animated) -->
+      <path id="f-client-nginx"        class="conn-flow" d="M295,53 L295,98"                                  style="stroke:var(--col-nginx)"/>
+      <path id="f-nginx-catalog"       class="conn-flow" d="M237,138 C195,167 128,196 88,223"                style="stroke:var(--col-catalog)"/>
+      <path id="f-nginx-reservation"   class="conn-flow" d="M295,138 L295,222"                               style="stroke:var(--col-reservation)"/>
+      <path id="f-nginx-payment"       class="conn-flow" d="M353,138 C393,167 462,196 502,223"               style="stroke:var(--col-payment)"/>
+      <path id="f-catalog-redis"       class="conn-flow" d="M88,273 L88,368"                                 style="stroke:var(--col-redis)"/>
+      <path id="f-reservation-redis"   class="conn-flow" d="M242,270 C192,308 128,344 88,368"               style="stroke:var(--col-redis)"/>
+      <path id="f-reservation-rabbitmq"class="conn-flow" d="M348,270 C398,308 462,344 502,368"              style="stroke:var(--col-rabbitmq)"/>
+      <path id="f-payment-rabbitmq"    class="conn-flow" d="M502,273 L502,368"                               style="stroke:var(--col-rabbitmq)"/>
+
+      <!-- packet animation layer (circles added here by JS) -->
+      <g id="packets"></g>
+
+      <!-- ── CLIENT node ── -->
+      <g id="node-client">
+        <rect class="node-rect" x="200" y="18" width="190" height="35" stroke="var(--col-client)" opacity=".7"/>
+        <text class="node-label" x="295" y="33" style="fill:var(--col-client)">CLIENT</text>
+        <text class="node-sub"   x="295" y="46">BROWSER</text>
+        <circle class="health-dot" id="hd-client" cx="381" cy="26" fill="var(--green)"/>
+      </g>
+
+      <!-- ── NGINX node ── -->
+      <g id="node-nginx">
+        <rect class="node-rect" x="185" y="98" width="220" height="40" stroke="var(--col-nginx)"/>
+        <text class="node-label" x="295" y="113" style="fill:var(--col-nginx);font-size:12px">NGINX</text>
+        <text class="node-sub"   x="295" y="128">API GATEWAY · :80</text>
+        <circle class="health-dot" id="hd-nginx" cx="397" cy="106" fill="var(--green)"/>
+      </g>
+
+      <!-- ── flight-catalog node ── -->
+      <g id="node-catalog">
+        <rect class="node-rect" x="14" y="222" width="148" height="51" stroke="var(--col-catalog)"/>
+        <text class="node-label" x="88" y="237" style="fill:var(--col-catalog)">flight-catalog</text>
+        <text class="node-sub"   x="88" y="251">:3001  ·  SQLite</text>
+        <text class="node-badge" x="88" y="264" style="fill:var(--text-dim)">voos  ·  assentos</text>
+        <circle class="health-dot" id="hd-catalog" cx="154" cy="230" fill="var(--text-dim)"/>
+      </g>
+
+      <!-- ── reservation-service node ── -->
+      <g id="node-reservation">
+        <rect class="node-rect" x="205" y="222" width="180" height="51" stroke="var(--col-reservation)"/>
+        <text class="node-label" x="295" y="237" style="fill:var(--col-reservation)">reservation-service</text>
+        <text class="node-sub"   x="295" y="251">:3002  ·  SQLite</text>
+        <text class="node-badge" x="295" y="264" style="fill:var(--text-dim)">lock  ·  booking</text>
+        <circle class="health-dot" id="hd-reservation" cx="377" cy="230" fill="var(--text-dim)"/>
+      </g>
+
+      <!-- ── payment-service node ── -->
+      <g id="node-payment">
+        <rect class="node-rect" x="428" y="222" width="148" height="51" stroke="var(--col-payment)"/>
+        <text class="node-label" x="502" y="237" style="fill:var(--col-payment)">payment-service</text>
+        <text class="node-sub"   x="502" y="251">:3003  ·  SQLite</text>
+        <text class="node-badge" x="502" y="264" style="fill:var(--text-dim)">pagamentos</text>
+        <circle class="health-dot" id="hd-payment" cx="568" cy="230" fill="var(--text-dim)"/>
+      </g>
+
+      <!-- ── REDIS node ── -->
+      <g id="node-redis">
+        <rect class="node-rect" x="14" y="368" width="148" height="42" stroke="var(--col-redis)"/>
+        <text class="node-label" x="88" y="383" style="fill:var(--col-redis)">REDIS</text>
+        <text class="node-sub"   x="88" y="399">:6379  ·  lock  ·  cache</text>
+      </g>
+
+      <!-- ── RABBITMQ node ── -->
+      <g id="node-rabbitmq">
+        <rect class="node-rect" x="428" y="368" width="148" height="42" stroke="var(--col-rabbitmq)"/>
+        <text class="node-label" x="502" y="383" style="fill:var(--col-rabbitmq)">RABBITMQ</text>
+        <text class="node-sub"   x="502" y="399">:5672  ·  airline.events</text>
+      </g>
+
+      <!-- edge labels -->
+      <text x="307" y="79"  class="node-sub">HTTP</text>
+      <text x="138" y="168" class="node-sub" transform="rotate(-26,138,168)">REST</text>
+      <text x="307" y="185" class="node-sub">REST</text>
+      <text x="408" y="168" class="node-sub" transform="rotate(26,408,168)">REST</text>
+      <text x="36"  y="322" class="node-sub" transform="rotate(-90,36,322)">SET NX</text>
+      <text x="142" y="326" class="node-sub" transform="rotate(-34,142,326)">lock</text>
+      <text x="418" y="326" class="node-sub" transform="rotate(34,418,326)">publish</text>
+      <text x="514" y="324" class="node-sub" transform="rotate(90,514,324)">consume</text>
+    </svg>
+  </div>
+
+  <!-- ── Event log ── -->
+  <div class="log-panel">
+    <div class="log-header">
+      <span>EVENT LOG</span>
+      <span id="log-count" style="color:var(--amber)">0 eventos</span>
+    </div>
+    <div class="log-scroll" id="log-scroll"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--col-nginx)"></div>lock.acquired</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--col-redis)"></div>lock.failed</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--col-reservation)"></div>db.transaction</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--col-rabbitmq)"></div>rabbitmq.published</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#22cc55"></div>payment.succeeded</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--col-redis)"></div>payment.failed</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>reservation.confirmed</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f43f5e"></div>reservation.cancelled</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Colors & event metadata ─────────────────────────────────────────────────
+const EVENT_META = {
+  'lock.acquired':         { color: '#f0a030', label: 'LOCK ACQ',    node: 'redis'       },
+  'lock.failed':           { color: '#f05050', label: 'LOCK FAIL',   node: null          },
+  'lock.released':         { color: '#5a6a7a', label: 'LOCK REL',    node: null          },
+  'db.transaction':        { color: '#3ddc84', label: 'DB TX',       node: 'reservation' },
+  'rabbitmq.published':    { color: '#ff8c42', label: 'MQ PUBLISH',  node: 'rabbitmq'    },
+  'payment.succeeded':     { color: '#22cc55', label: 'PAY OK',      node: 'payment'     },
+  'payment.failed':        { color: '#f05050', label: 'PAY FAIL',    node: 'payment'     },
+  'reservation.confirmed': { color: '#4aa8f0', label: 'CONFIRMED',   node: 'client'      },
+  'reservation.cancelled': { color: '#f43f5e', label: 'CANCELLED',   node: null          },
+}
+
+// event type → list of {pathId, color, reverse, delay}
+const EVENT_FLOWS = {
+  'lock.acquired': [
+    { path: 'p-client-nginx',       color: '#f0a030', delay:   0 },
+    { path: 'p-nginx-reservation',  color: '#f0a030', delay: 250 },
+    { path: 'p-reservation-redis',  color: '#f05050', delay: 500 },
+  ],
+  'lock.failed': [
+    { path: 'p-reservation-redis',  color: '#f05050', delay: 0, reverse: true },
+  ],
+  'lock.released': [
+    { path: 'p-reservation-redis',  color: '#5a6a7a', delay: 0, reverse: true },
+  ],
+  'db.transaction': [],
+  'rabbitmq.published': [
+    { path: 'p-reservation-rabbitmq', color: '#ff8c42', delay: 0 },
+  ],
+  'payment.succeeded': [
+    { path: 'p-payment-rabbitmq',     color: '#22cc55', delay:   0, reverse: true },
+    { path: 'p-reservation-rabbitmq', color: '#22cc55', delay: 250, reverse: true },
+  ],
+  'payment.failed': [
+    { path: 'p-payment-rabbitmq',     color: '#f05050', delay:   0, reverse: true },
+    { path: 'p-reservation-rabbitmq', color: '#f05050', delay: 250, reverse: true },
+  ],
+  'reservation.confirmed': [
+    { path: 'p-nginx-reservation',  color: '#4aa8f0', delay:   0, reverse: true },
+    { path: 'p-client-nginx',       color: '#4aa8f0', delay: 300, reverse: true },
+  ],
+  'reservation.cancelled': [
+    { path: 'p-nginx-reservation',  color: '#f43f5e', delay:   0, reverse: true },
+    { path: 'p-client-nginx',       color: '#f43f5e', delay: 300, reverse: true },
+  ],
+}
+
+// node → flow line ids to activate
+const NODE_FLOWS = {
+  'client':      ['f-client-nginx'],
+  'nginx':       ['f-nginx-catalog','f-nginx-reservation','f-nginx-payment'],
+  'catalog':     ['f-nginx-catalog','f-catalog-redis'],
+  'reservation': ['f-nginx-reservation','f-reservation-redis','f-reservation-rabbitmq'],
+  'payment':     ['f-nginx-payment','f-payment-rabbitmq'],
+  'redis':       ['f-reservation-redis','f-catalog-redis'],
+  'rabbitmq':    ['f-reservation-rabbitmq','f-payment-rabbitmq'],
+}
+
+// ── State ───────────────────────────────────────────────────────────────────
+let lastEventId = 0
+let totalEvents = 0
+let activeFlows = 0
+const eventTimes = []   // timestamps of recent events (for rpm calc)
+let servicesOnline = 0
+const svg = document.getElementById('arch-svg')
+const packetsLayer = document.getElementById('packets')
+
+// ── Clock ───────────────────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('pt-BR', { hour12: false })
+}
+setInterval(updateClock, 1000)
+updateClock()
+
+// ── Packet animation ────────────────────────────────────────────────────────
+function animatePacket(pathId, color, reverse = false, duration = 650) {
+  const path = document.getElementById(pathId)
+  if (!path) return
+  const len = path.getTotalLength()
+
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+  circle.setAttribute('r', '5')
+  circle.setAttribute('fill', color)
+  circle.setAttribute('filter', `drop-shadow(0 0 5px ${color})`)
+  packetsLayer.appendChild(circle)
+
+  const startTime = performance.now()
+  function frame(now) {
+    const p = Math.min((now - startTime) / duration, 1)
+    // ease in-out cubic
+    const t = p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p+2,3)/2
+    const pt = path.getPointAtLength(reverse ? (1-t)*len : t*len)
+    circle.setAttribute('cx', pt.x)
+    circle.setAttribute('cy', pt.y)
+    if (p < 1) requestAnimationFrame(frame)
+    else packetsLayer.removeChild(circle)
+  }
+  requestAnimationFrame(frame)
+}
+
+// ── Node glow ───────────────────────────────────────────────────────────────
+const glowTimers = {}
+function glowNode(nodeId, duration = 1200) {
+  const el = document.getElementById('node-' + nodeId)
+  if (!el) return
+  clearTimeout(glowTimers[nodeId])
+  el.classList.add('glow-' + nodeId)
+  glowTimers[nodeId] = setTimeout(() => el.classList.remove('glow-' + nodeId), duration)
+}
+
+// ── Flow line activation ─────────────────────────────────────────────────────
+const flowTimers = {}
+function activateFlow(flowId, duration = 2000) {
+  const el = document.getElementById(flowId)
+  if (!el) return
+  clearTimeout(flowTimers[flowId])
+  el.classList.add('flowing')
+  flowTimers[flowId] = setTimeout(() => el.classList.remove('flowing'), duration)
+}
+
+// ── Process incoming events ─────────────────────────────────────────────────
+function processEvent(ev) {
+  const meta  = EVENT_META[ev.type] || { color: '#8899aa', label: ev.type, node: null }
+  const flows = EVENT_FLOWS[ev.type] || []
+
+  // animate packets
+  flows.forEach(({ path, color, delay = 0, reverse = false }) => {
+    setTimeout(() => animatePacket(path, color, reverse), delay)
+    // activate flow line
+    setTimeout(() => activateFlow('f-' + path.slice(2), 2500), delay)
+  })
+
+  // glow affected nodes
+  if (meta.node) glowNode(meta.node)
+  if (ev.type === 'lock.acquired') { glowNode('reservation'); glowNode('redis') }
+  if (ev.type === 'rabbitmq.published') { glowNode('reservation'); glowNode('rabbitmq') }
+  if (ev.type === 'payment.succeeded') { glowNode('payment'); glowNode('reservation') }
+  if (ev.type === 'reservation.confirmed') { glowNode('nginx') }
+
+  // increment active flows counter (lock.acquired +1, confirmed/cancelled -1)
+  if (ev.type === 'lock.acquired') activeFlows++
+  if (['reservation.confirmed','reservation.cancelled'].includes(ev.type) && activeFlows > 0) activeFlows--
+  document.getElementById('stat-flows').textContent = activeFlows
+
+  // log entry
+  appendLogEntry(ev, meta)
+}
+
+// ── Log entry ───────────────────────────────────────────────────────────────
+function appendLogEntry(ev, meta) {
+  const scroll = document.getElementById('log-scroll')
+  const entry  = document.createElement('div')
+  entry.className = 'log-entry'
+
+  const t = ev.created_at
+    ? new Date(ev.created_at + (ev.created_at.endsWith('Z') ? '' : 'Z'))
+        .toLocaleTimeString('pt-BR', { hour12: false, fractionalSecondDigits: 3 })
+    : '--:--:--.---'
+
+  entry.innerHTML = `
+    <span class="log-time">${t}</span>
+    <span class="log-type" style="color:${meta.color}">${meta.label}</span>
+    <span class="log-label" title="${ev.label || ''}">${ev.label || `${ev.source} → ${ev.target}`}</span>
+  `
+  // prepend (newest at top, but container is column-reverse so append = top)
+  scroll.appendChild(entry)
+
+  // cap log to 80 entries
+  while (scroll.children.length > 80) scroll.removeChild(scroll.firstChild)
+}
+
+// ── Stats update ─────────────────────────────────────────────────────────────
+function updateStats(newCount) {
+  const now = Date.now()
+  eventTimes.push(now)
+  // keep only last 60s
+  while (eventTimes.length && eventTimes[0] < now - 60000) eventTimes.shift()
+  document.getElementById('stat-rate').textContent  = eventTimes.length
+  document.getElementById('stat-total').textContent = totalEvents
+  document.getElementById('log-count').textContent  = `${totalEvents} eventos`
+}
+
+// ── Poll /api/events ─────────────────────────────────────────────────────────
+async function fetchEvents() {
+  try {
+    const url = `/api/events?since=${lastEventId}&limit=50`
+    const res  = await fetch(url, { signal: AbortSignal.timeout(4000) })
+    if (!res.ok) return
+    const events = await res.json()
+    // events are ordered DESC, so process in reverse (oldest first)
+    const ordered = [...events].reverse()
+    for (const ev of ordered) {
+      if (ev.id > lastEventId) {
+        lastEventId = ev.id
+        totalEvents++
+        processEvent(ev)
+        eventTimes.push(Date.now())
+      }
+    }
+    // trim event times window
+    const now = Date.now()
+    while (eventTimes.length && eventTimes[0] < now - 60000) eventTimes.shift()
+    document.getElementById('stat-rate').textContent  = eventTimes.length
+    document.getElementById('stat-total').textContent = totalEvents
+    document.getElementById('log-count').textContent  = `${totalEvents} eventos`
+  } catch { /* ignore, retry next tick */ }
+}
+
+setInterval(fetchEvents, 1200)
+fetchEvents()
+
+// ── Health checks ────────────────────────────────────────────────────────────
+const HEALTH_ENDPOINTS = [
+  { id: 'catalog',     url: '/api/catalog/health'  },
+  { id: 'reservation', url: '/api/booking/health'  },
+  { id: 'payment',     url: '/api/payment/health'  },
+]
+
+async function checkHealth() {
+  let online = 0
+  for (const { id, url } of HEALTH_ENDPOINTS) {
+    const dot = document.getElementById('hd-' + id)
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(3000) })
+      if (res.ok) {
+        dot.setAttribute('fill', '#3ddc84')
+        online++
+      } else {
+        dot.setAttribute('fill', '#f0a030')
+      }
+    } catch {
+      dot.setAttribute('fill', '#f05050')
+    }
+  }
+  servicesOnline = online
+  const el = document.getElementById('stat-services')
+  el.textContent  = online
+  el.style.color  = online === 3 ? 'var(--green)' : online > 0 ? 'var(--amber)' : 'var(--red)'
+}
+
+setInterval(checkHealth, 10000)
+checkHealth()
+</script>
+</body>
+</html>
