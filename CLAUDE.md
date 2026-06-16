@@ -147,3 +147,8 @@ IDs de assento seguem o padrão `seat-<flight_num>-<número>` (ex: `seat-001-20A
 - **Seat seed duplicado:** `reservation-service/src/config/database.ts` tem cópia dos IDs de assento (`INSERT OR IGNORE`). Ao adicionar voos/assentos no `flight-catalog`, adicionar também lá — senão `SELECT ... FROM seats` retorna `null` e a reserva retorna 404.
 - **Cancelamento de reserva deve restaurar assento em dois lugares:** em `ReservationService.cancel()` (cancelamento manual) e no consumer `q.payment.failed` (pagamento falho). Esquecer um deixa o assento preso como `reserved` para sempre.
 - **`bun:sqlite` transactions:** o padrão é `db.transaction(() => { ... })()` — a função `.transaction()` retorna um wrapper que precisa ser chamado. Não chamar resulta em silêncio (a função é criada mas nunca executada).
+- **Dashboard de polling + histórico:** ao inicializar uma página que faz polling de `/api/events`, carregar os eventos existentes silenciosamente (sem animar) e só disparar efeitos visuais em eventos que cheguem *depois* do carregamento. Usar um flag `initialized` para separar as duas fases — sem isso o refresh replaya animações antigas e parece falso.
+
+## Frontend — preferências de UI
+
+- Animações devem ser **limpas e mínimas**: 1 partícula por evento (não burst), sem efeito de tilt 3D no mouse, sem efeitos que distraiam do conteúdo.

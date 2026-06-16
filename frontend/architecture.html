@@ -13,280 +13,155 @@
       --bg3:      #111b2e;
       --border:   #1e3050;
       --text:     #c8ad7a;
-      --text-dim: #5a6a7a;
+      --text-dim: #4a5a6a;
       --amber:    #f0a030;
       --green:    #3ddc84;
       --red:      #f05050;
       --blue:     #4aa8f0;
       --white:    #e8dfc8;
-      /* node colors */
+      --col-client:      #6a7a8a;
       --col-nginx:       #f0a030;
       --col-catalog:     #4aa8f0;
       --col-reservation: #3ddc84;
       --col-payment:     #a87fff;
       --col-redis:       #f05050;
       --col-rabbitmq:    #ff8c42;
-      --col-client:      #8899aa;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 13px;
-      line-height: 1.5;
-      overflow: hidden;
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 13px; overflow: hidden; }
 
     /* scanlines */
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg, transparent, transparent 2px,
-        rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px
-      );
-      pointer-events: none;
-      z-index: 9999;
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px);
     }
 
     /* ── Header ── */
     header {
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      background: var(--bg2);
-      height: 54px;
+      height: 50px; border-bottom: 1px solid var(--border); padding: 0 24px;
+      display: flex; align-items: center; gap: 18px; background: var(--bg2); flex-shrink: 0;
     }
-    .logo {
-      font-size: 18px;
-      color: var(--amber);
-      letter-spacing: 5px;
-      text-shadow: 0 0 16px rgba(240,160,48,.4);
-    }
-    .logo-sub { color: var(--text-dim); font-size: 10px; letter-spacing: 2px; }
+    .logo { font-size: 17px; color: var(--amber); letter-spacing: 5px; text-shadow: 0 0 14px rgba(240,160,48,.35); }
+    .logo-sub { font-size: 9px; color: var(--text-dim); letter-spacing: 2px; }
     .nav-link {
-      color: var(--text-dim);
-      text-decoration: none;
-      font-size: 11px;
-      letter-spacing: 1px;
-      border: 1px solid var(--border);
-      padding: 4px 10px;
-      transition: color .2s, border-color .2s;
+      color: var(--text-dim); text-decoration: none; font-size: 10px; letter-spacing: 1px;
+      border: 1px solid var(--border); padding: 4px 10px; transition: .2s;
     }
     .nav-link:hover { color: var(--amber); border-color: var(--amber); }
-    .header-right {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    .live-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--green);
-      letter-spacing: 1px;
-    }
-    .live-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 1.4s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
-    #clock { letter-spacing: 2px; }
+    .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 11px; color: var(--text-dim); }
+    .live-badge { display: flex; align-items: center; gap: 6px; color: var(--green); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.75)} }
 
     /* ── Stats row ── */
-    .stats-row {
-      display: flex;
-      gap: 1px;
-      background: var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .stat-cell {
-      flex: 1;
-      background: var(--bg2);
-      padding: 7px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .stat-label { color: var(--text-dim); font-size: 10px; letter-spacing: 1px; }
-    .stat-value { color: var(--white); font-size: 16px; }
-    .stat-unit  { color: var(--text-dim); font-size: 10px; }
+    .stats-row { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .stat-cell { flex: 1; background: var(--bg2); padding: 6px 16px; display: flex; align-items: baseline; gap: 8px; }
+    .stat-label { color: var(--text-dim); font-size: 9px; letter-spacing: 1.5px; }
+    .stat-val   { color: var(--white); font-size: 18px; }
+    .stat-unit  { color: var(--text-dim); font-size: 9px; }
 
-    /* ── Main layout ── */
-    .main-area {
-      display: flex;
-      height: calc(100vh - 54px - 37px);
-    }
+    /* ── Main ── */
+    .main-area { display: flex; height: calc(100vh - 50px - 33px); }
 
     /* ── Diagram panel ── */
     .diagram-panel {
-      flex: 1;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      border-right: 1px solid var(--border);
-      overflow: hidden;
+      flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+      padding: 12px; border-right: 1px solid var(--border); overflow: hidden;
     }
-
-    /* subtle grid background */
     .diagram-panel::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.016) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,.016) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+    #svg-wrapper {
+      width: 100%; max-width: 620px; height: 100%; display: flex; align-items: center;
+    }
+    #arch-svg { width: 100%; height: auto; overflow: visible; }
+
+    /* hint banner */
+    .hint-banner {
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; color: var(--text-dim); letter-spacing: 1px;
+      pointer-events: none; transition: opacity .4s;
     }
 
-    #arch-svg {
-      width: 100%;
-      max-width: 640px;
-      height: auto;
-      overflow: visible;
-    }
+    /* SVG styles */
+    .node-group { cursor: pointer; }
+    .node-bg    { fill: var(--bg3); transition: filter .3s; }
+    .node-stripe{ }
+    .node-title { font-family: 'Share Tech Mono',monospace; font-size: 10.5px; fill: var(--white); text-anchor: middle; dominant-baseline: middle; }
+    .node-sub   { font-family: 'Share Tech Mono',monospace; font-size: 8.5px;  fill: var(--text-dim); text-anchor: middle; dominant-baseline: middle; }
+    .node-tag   { font-family: 'Share Tech Mono',monospace; font-size: 7.5px;  fill: var(--text-dim); text-anchor: middle; dominant-baseline: middle; opacity: .7; }
+    .conn-line  { fill: none; stroke: var(--border); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: .5; transition: opacity .3s, stroke-width .3s; }
+    .conn-flow  { fill: none; stroke-width: 2; stroke-dasharray: 7 5; opacity: 0; transition: opacity .4s; }
+    .conn-flow.flowing { opacity: .4; animation: dashflow 1s linear infinite; }
+    @keyframes dashflow { to { stroke-dashoffset: -48; } }
+    .edge-label { font-family:'Share Tech Mono',monospace; font-size:7.5px; fill:var(--text-dim); text-anchor:middle; dominant-baseline:middle; opacity:.6; }
+    .counter-badge { font-family:'Share Tech Mono',monospace; font-size:8px; fill:var(--text-dim); text-anchor:middle; dominant-baseline:middle; }
+    .health-ring { fill:none; stroke-width:1.5; }
 
-    /* SVG node rects */
-    .node-rect {
-      rx: 4;
-      ry: 4;
-      stroke-width: 1.5;
-      fill: var(--bg3);
-      transition: filter .3s;
-    }
-    .node-label {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 11px;
-      fill: var(--white);
-      dominant-baseline: middle;
-      text-anchor: middle;
-    }
-    .node-sub {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 9px;
-      fill: var(--text-dim);
-      dominant-baseline: middle;
-      text-anchor: middle;
-    }
-    .node-badge {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 8px;
-      dominant-baseline: middle;
-      text-anchor: middle;
-    }
+    /* focus mode dimming */
+    .dim { opacity: 0.08 !important; transition: opacity .35s; }
+    .node-group { transition: opacity .35s; }
 
-    /* connection lines */
-    .conn-line {
-      fill: none;
-      stroke-width: 1.5;
-      stroke: var(--border);
-      stroke-dasharray: 6 4;
-      opacity: .55;
+    /* ── Tooltip ── */
+    #node-tooltip {
+      position: fixed; z-index: 500; pointer-events: none;
+      background: var(--bg2); border: 1px solid var(--border);
+      min-width: 270px; max-width: 310px; padding: 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      opacity: 0; transition: opacity .15s; border-radius: 3px;
     }
-    .conn-line.active { stroke-dasharray: none; opacity: .7; }
+    #node-tooltip.visible { opacity: 1; }
+    .tt-header { padding: 10px 12px 8px; border-bottom: 1px solid var(--border); }
+    .tt-name   { font-size: 12px; }
+    .tt-tech   { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+    .tt-desc   { font-size: 9px; color: var(--text-dim); margin-top: 3px; line-height: 1.5; }
+    .tt-status { float: right; font-size: 9px; padding: 2px 7px; border-radius: 2px; }
+    .tt-status.ok   { color: var(--green); border: 1px solid rgba(61,220,132,.3); }
+    .tt-status.down { color: var(--red);   border: 1px solid rgba(240,80,80,.3); }
+    .tt-status.unknown { color: var(--text-dim); border: 1px solid var(--border); }
+    .tt-section-label { font-size: 8px; letter-spacing: 2px; color: var(--text-dim); padding: 6px 12px 3px; }
+    .tt-spark   { padding: 0 12px 6px; }
+    .tt-events  { max-height: 110px; overflow-y: auto; border-top: 1px solid var(--border); }
+    .tt-events::-webkit-scrollbar { width: 3px; }
+    .tt-events::-webkit-scrollbar-thumb { background: var(--border); }
+    .tt-ev-row  { padding: 4px 12px; display: flex; gap: 8px; border-bottom: 1px solid rgba(30,48,80,.4); }
+    .tt-ev-row:hover { background: var(--bg3); }
+    .tt-ev-time { font-size: 9px; color: var(--text-dim); flex-shrink: 0; }
+    .tt-ev-type { font-size: 9px; flex-shrink: 0; }
+    .tt-ev-label{ font-size: 9px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tt-empty   { padding: 10px 12px; font-size: 9px; color: var(--text-dim); text-align: center; }
 
-    /* data-flow animation on lines */
-    .conn-flow {
-      fill: none;
-      stroke-width: 1.5;
-      stroke-dasharray: 8 3;
-      opacity: 0;
+    /* ── Log panel ── */
+    .log-panel { width: 340px; display: flex; flex-direction: column; background: var(--bg); flex-shrink: 0; }
+    .log-header { padding: 8px 12px 6px; border-bottom: 1px solid var(--border); }
+    .log-title  { font-size: 9px; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 6px; }
+    .log-filters{ display: flex; gap: 4px; flex-wrap: wrap; }
+    .filter-btn {
+      font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px;
+      padding: 3px 8px; cursor: pointer; border: 1px solid var(--border);
+      background: transparent; color: var(--text-dim); transition: .15s;
     }
-    .conn-flow.flowing {
-      opacity: .35;
-      animation: dashflow 1.2s linear infinite;
-    }
-    @keyframes dashflow { to { stroke-dashoffset: -44; } }
-
-    /* health indicator dots on nodes */
-    .health-dot {
-      r: 4;
-      transition: fill .5s;
-    }
-
-    /* ── Event log panel ── */
-    .log-panel {
-      width: 360px;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-    }
-    .log-header {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .log-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 6px 0;
-      display: flex;
-      flex-direction: column-reverse;
-    }
-    .log-scroll::-webkit-scrollbar { width: 4px; }
-    .log-scroll::-webkit-scrollbar-track { background: var(--bg); }
+    .filter-btn:hover    { color: var(--amber); border-color: var(--amber); }
+    .filter-btn.active   { color: var(--bg); background: var(--amber); border-color: var(--amber); }
+    .log-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column-reverse; }
+    .log-scroll::-webkit-scrollbar { width: 3px; }
     .log-scroll::-webkit-scrollbar-thumb { background: var(--border); }
-
     .log-entry {
-      display: grid;
-      grid-template-columns: 78px 130px 1fr;
-      gap: 0 8px;
-      padding: 4px 14px;
-      border-bottom: 1px solid rgba(30,48,80,.4);
-      animation: fadein .3s ease-out;
+      display: grid; grid-template-columns: 72px 90px 1fr;
+      gap: 0 6px; padding: 4px 12px; border-bottom: 1px solid rgba(30,48,80,.35);
+      cursor: pointer; animation: slidein .25s ease-out;
     }
     .log-entry:hover { background: var(--bg2); }
-    @keyframes fadein { from { opacity:0; transform: translateX(8px); } to { opacity:1; transform:none; } }
-
-    .log-time  { color: var(--text-dim); font-size: 10px; }
-    .log-type  { font-size: 10px; letter-spacing: .5px; }
-    .log-label { color: var(--text-dim); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* Legend */
-    .legend {
-      border-top: 1px solid var(--border);
-      padding: 8px 14px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 9px;
-      color: var(--text-dim);
-    }
-    .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
-
-    /* node glow classes (toggled by JS) */
-    .glow-reservation { filter: drop-shadow(0 0 8px var(--col-reservation)); }
-    .glow-redis       { filter: drop-shadow(0 0 8px var(--col-redis)); }
-    .glow-rabbitmq    { filter: drop-shadow(0 0 8px var(--col-rabbitmq)); }
-    .glow-payment     { filter: drop-shadow(0 0 8px var(--col-payment)); }
-    .glow-catalog     { filter: drop-shadow(0 0 8px var(--col-catalog)); }
-    .glow-nginx       { filter: drop-shadow(0 0 8px var(--col-nginx)); }
-    .glow-client      { filter: drop-shadow(0 0 8px var(--col-client)); }
+    .log-entry.highlight { background: rgba(240,160,48,.08); }
+    @keyframes slidein { from { opacity:0; transform:translateX(6px); } to { opacity:1; transform:none; } }
+    .le-time  { font-size: 9px; color: var(--text-dim); }
+    .le-type  { font-size: 9px; letter-spacing: .5px; }
+    .le-label { font-size: 9px; color: var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .log-footer { border-top:1px solid var(--border); padding:6px 12px; font-size:9px; color:var(--text-dim); display:flex; justify-content:space-between; }
+    .focus-hint { color: var(--amber); }
   </style>
 </head>
 <body>
@@ -297,417 +172,742 @@
     <div class="logo-sub">DISTRIBUTED SYSTEMS</div>
   </div>
   <a href="/" class="nav-link">← RESERVAS</a>
-  <div class="header-right">
-    <div class="live-badge">
-      <div class="live-dot"></div>
-      LIVE
-    </div>
+  <div class="hdr-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
     <span id="clock">--:--:--</span>
   </div>
 </header>
 
 <div class="stats-row">
-  <div class="stat-cell">
-    <span class="stat-label">EVENTOS LOG</span>
-    <span class="stat-value" id="stat-total">0</span>
-  </div>
-  <div class="stat-cell">
-    <span class="stat-label">EVENTOS/MIN</span>
-    <span class="stat-value" id="stat-rate">0</span>
-    <span class="stat-unit">rpm</span>
-  </div>
-  <div class="stat-cell">
-    <span class="stat-label">RESERVAS ATIVAS</span>
-    <span class="stat-value" id="stat-flows">0</span>
-  </div>
-  <div class="stat-cell">
-    <span class="stat-label">SERVIÇOS</span>
-    <span class="stat-value" id="stat-services" style="color:var(--green)">—</span>
-    <span class="stat-unit">/ 3</span>
-  </div>
+  <div class="stat-cell"><span class="stat-label">TOTAL EVENTOS</span><span class="stat-val" id="s-total">0</span></div>
+  <div class="stat-cell"><span class="stat-label">EVENTOS/MIN</span><span class="stat-val" id="s-rpm">0</span><span class="stat-unit">rpm</span></div>
+  <div class="stat-cell"><span class="stat-label">RESERVAS ATIVAS</span><span class="stat-val" id="s-flows">0</span></div>
+  <div class="stat-cell"><span class="stat-label">SERVIÇOS</span><span class="stat-val" id="s-svcs" style="color:var(--green)">—</span><span class="stat-unit">/ 3</span></div>
 </div>
 
 <div class="main-area">
 
-  <!-- ── Architecture diagram ── -->
-  <div class="diagram-panel">
-    <svg id="arch-svg" viewBox="0 0 590 480" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L6,3 z" fill="var(--border)" opacity=".6"/>
-        </marker>
-        <!-- glow filters -->
-        <filter id="gf-amber" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="4" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="gf-green" x="-40%" y="-40%" width="180%" height="180%">
-          <feColorMatrix type="matrix" values="0 0 0 0 0.24  0 0 0 0 0.86  0 0 0 0 0.52  0 0 0 1 0" result="colored"/>
-          <feGaussianBlur in="colored" stdDeviation="5" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
+  <!-- ── Diagram ── -->
+  <div class="diagram-panel" id="diagram-panel">
+    <div id="svg-wrapper">
+      <svg id="arch-svg" viewBox="0 0 590 490" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Per-color glow filters -->
+          <filter id="gf-amber" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feFlood flood-color="#f0a030" flood-opacity=".6" result="c"/>
+            <feComposite in="c" in2="b" operator="in" result="g"/>
+            <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gf-green" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feFlood flood-color="#3ddc84" flood-opacity=".6" result="c"/>
+            <feComposite in="c" in2="b" operator="in" result="g"/>
+            <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gf-blue" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feFlood flood-color="#4aa8f0" flood-opacity=".6" result="c"/>
+            <feComposite in="c" in2="b" operator="in" result="g"/>
+            <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gf-purple" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feFlood flood-color="#a87fff" flood-opacity=".6" result="c"/>
+            <feComposite in="c" in2="b" operator="in" result="g"/>
+            <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gf-red" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feFlood flood-color="#f05050" flood-opacity=".6" result="c"/>
+            <feComposite in="c" in2="b" operator="in" result="g"/>
+            <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gf-orange" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feFlood flood-color="#ff8c42" flood-opacity=".6" result="c"/>
+            <feComposite in="c" in2="b" operator="in" result="g"/>
+            <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
 
-      <!-- ── Connection paths (drawn first, under nodes) ── -->
+        <!-- ── Connection base lines ── -->
+        <path id="p-client-nginx"         class="conn-line" d="M295,53 L295,98"/>
+        <path id="p-nginx-catalog"        class="conn-line" d="M234,144 C188,172 126,204 90,220"/>
+        <path id="p-nginx-reservation"    class="conn-line" d="M295,144 L295,220"/>
+        <path id="p-nginx-payment"        class="conn-line" d="M356,144 C404,172 464,204 500,220"/>
+        <path id="p-catalog-redis"        class="conn-line" d="M90,282 L90,370"/>
+        <path id="p-reservation-redis"    class="conn-line" d="M240,278 C188,320 126,354 90,370"/>
+        <path id="p-reservation-rabbitmq" class="conn-line" d="M350,278 C404,320 464,354 500,370"/>
+        <path id="p-payment-rabbitmq"     class="conn-line" d="M500,282 L500,370"/>
 
-      <!-- base connection lines (dashed) -->
-      <path id="p-client-nginx"        class="conn-line" d="M295,53 L295,98"/>
-      <path id="p-nginx-catalog"       class="conn-line" d="M237,138 C195,167 128,196 88,223"/>
-      <path id="p-nginx-reservation"   class="conn-line" d="M295,138 L295,222"/>
-      <path id="p-nginx-payment"       class="conn-line" d="M353,138 C393,167 462,196 502,223"/>
-      <path id="p-catalog-redis"       class="conn-line" d="M88,273 L88,368"/>
-      <path id="p-reservation-redis"   class="conn-line" d="M242,270 C192,308 128,344 88,368"/>
-      <path id="p-reservation-rabbitmq"class="conn-line" d="M348,270 C398,308 462,344 502,368"/>
-      <path id="p-payment-rabbitmq"    class="conn-line" d="M502,273 L502,368"/>
+        <!-- ── Flow animation overlays (same geometry, animated) ── -->
+        <path id="f-client-nginx"         class="conn-flow" d="M295,53 L295,98"                              style="stroke:var(--col-nginx)"/>
+        <path id="f-nginx-catalog"        class="conn-flow" d="M234,144 C188,172 126,204 90,220"             style="stroke:var(--col-catalog)"/>
+        <path id="f-nginx-reservation"    class="conn-flow" d="M295,144 L295,220"                            style="stroke:var(--col-reservation)"/>
+        <path id="f-nginx-payment"        class="conn-flow" d="M356,144 C404,172 464,204 500,220"            style="stroke:var(--col-payment)"/>
+        <path id="f-catalog-redis"        class="conn-flow" d="M90,282 L90,370"                              style="stroke:var(--col-redis)"/>
+        <path id="f-reservation-redis"    class="conn-flow" d="M240,278 C188,320 126,354 90,370"             style="stroke:var(--col-redis)"/>
+        <path id="f-reservation-rabbitmq" class="conn-flow" d="M350,278 C404,320 464,354 500,370"            style="stroke:var(--col-rabbitmq)"/>
+        <path id="f-payment-rabbitmq"     class="conn-flow" d="M500,282 L500,370"                            style="stroke:var(--col-rabbitmq)"/>
 
-      <!-- flowing animation overlays (same paths, animated) -->
-      <path id="f-client-nginx"        class="conn-flow" d="M295,53 L295,98"                                  style="stroke:var(--col-nginx)"/>
-      <path id="f-nginx-catalog"       class="conn-flow" d="M237,138 C195,167 128,196 88,223"                style="stroke:var(--col-catalog)"/>
-      <path id="f-nginx-reservation"   class="conn-flow" d="M295,138 L295,222"                               style="stroke:var(--col-reservation)"/>
-      <path id="f-nginx-payment"       class="conn-flow" d="M353,138 C393,167 462,196 502,223"               style="stroke:var(--col-payment)"/>
-      <path id="f-catalog-redis"       class="conn-flow" d="M88,273 L88,368"                                 style="stroke:var(--col-redis)"/>
-      <path id="f-reservation-redis"   class="conn-flow" d="M242,270 C192,308 128,344 88,368"               style="stroke:var(--col-redis)"/>
-      <path id="f-reservation-rabbitmq"class="conn-flow" d="M348,270 C398,308 462,344 502,368"              style="stroke:var(--col-rabbitmq)"/>
-      <path id="f-payment-rabbitmq"    class="conn-flow" d="M502,273 L502,368"                               style="stroke:var(--col-rabbitmq)"/>
+        <!-- ── Edge labels ── -->
+        <text class="edge-label" x="307" y="77">HTTP</text>
+        <text class="edge-label" x="134" y="168" transform="rotate(-27,134,168)">REST</text>
+        <text class="edge-label" x="307" y="186">REST</text>
+        <text class="edge-label" x="410" y="168" transform="rotate(27,410,168)">REST</text>
+        <text class="edge-label" x="34"  y="328" transform="rotate(-90,34,328)">SET NX EX</text>
+        <text class="edge-label" x="140" y="330" transform="rotate(-33,140,330)">lock</text>
+        <text class="edge-label" x="416" y="330" transform="rotate(33,416,330)">publish</text>
+        <text class="edge-label" x="516" y="328" transform="rotate(90,516,328)">consume</text>
 
-      <!-- packet animation layer (circles added here by JS) -->
-      <g id="packets"></g>
+        <!-- ── Effects layer (pulses & packets added by JS) ── -->
+        <g id="effects-layer"></g>
+        <g id="packets-layer"></g>
 
-      <!-- ── CLIENT node ── -->
-      <g id="node-client">
-        <rect class="node-rect" x="200" y="18" width="190" height="35" stroke="var(--col-client)" opacity=".7"/>
-        <text class="node-label" x="295" y="33" style="fill:var(--col-client)">CLIENT</text>
-        <text class="node-sub"   x="295" y="46">BROWSER</text>
-        <circle class="health-dot" id="hd-client" cx="381" cy="26" fill="var(--green)"/>
-      </g>
+        <!-- ── CLIENT ── -->
+        <g id="node-client" class="node-group" data-node="client" style="pointer-events:bounding-box">
+          <rect class="node-bg" x="195" y="15" width="200" height="38" rx="4" stroke="var(--col-client)" stroke-width="1.2"/>
+          <rect class="node-stripe" x="195" y="15" width="200" height="3" rx="2" fill="var(--col-client)"/>
+          <text class="node-title" x="295" y="31" style="fill:var(--col-client);font-size:11px;letter-spacing:2px">CLIENT</text>
+          <text class="node-sub"   x="295" y="44">BROWSER</text>
+          <circle id="hd-client" r="4" cx="386" cy="23" fill="var(--green)"/>
+          <text class="counter-badge" id="ec-client" x="386" y="38" fill="var(--text-dim)">0</text>
+        </g>
 
-      <!-- ── NGINX node ── -->
-      <g id="node-nginx">
-        <rect class="node-rect" x="185" y="98" width="220" height="40" stroke="var(--col-nginx)"/>
-        <text class="node-label" x="295" y="113" style="fill:var(--col-nginx);font-size:12px">NGINX</text>
-        <text class="node-sub"   x="295" y="128">API GATEWAY · :80</text>
-        <circle class="health-dot" id="hd-nginx" cx="397" cy="106" fill="var(--green)"/>
-      </g>
+        <!-- ── NGINX ── -->
+        <g id="node-nginx" class="node-group" data-node="nginx" style="pointer-events:bounding-box">
+          <rect class="node-bg" x="182" y="98" width="226" height="46" rx="4" stroke="var(--col-nginx)" stroke-width="1.5"/>
+          <rect class="node-stripe" x="182" y="98" width="226" height="3" rx="2" fill="var(--col-nginx)"/>
+          <text class="node-title" x="295" y="117" style="fill:var(--col-nginx);font-size:12px;letter-spacing:3px">NGINX</text>
+          <text class="node-sub"   x="295" y="131">API GATEWAY · :80</text>
+          <text class="node-tag"   x="295" y="141">rate limiting · least_conn · ip_hash</text>
+          <circle id="hd-nginx" r="4" cx="399" cy="106" fill="var(--green)"/>
+          <text class="counter-badge" id="ec-nginx" x="399" y="121" fill="var(--text-dim)">0</text>
+        </g>
 
-      <!-- ── flight-catalog node ── -->
-      <g id="node-catalog">
-        <rect class="node-rect" x="14" y="222" width="148" height="51" stroke="var(--col-catalog)"/>
-        <text class="node-label" x="88" y="237" style="fill:var(--col-catalog)">flight-catalog</text>
-        <text class="node-sub"   x="88" y="251">:3001  ·  SQLite</text>
-        <text class="node-badge" x="88" y="264" style="fill:var(--text-dim)">voos  ·  assentos</text>
-        <circle class="health-dot" id="hd-catalog" cx="154" cy="230" fill="var(--text-dim)"/>
-      </g>
+        <!-- ── flight-catalog ── -->
+        <g id="node-catalog" class="node-group" data-node="catalog" style="pointer-events:bounding-box">
+          <rect class="node-bg" x="12" y="220" width="156" height="62" rx="4" stroke="var(--col-catalog)" stroke-width="1.2"/>
+          <rect class="node-stripe" x="12" y="220" width="156" height="3" rx="2" fill="var(--col-catalog)"/>
+          <text class="node-title" x="90" y="238" style="fill:var(--col-catalog)">flight-catalog</text>
+          <text class="node-sub"   x="90" y="251">:3001 · Bun/ElysiaJS</text>
+          <text class="node-tag"   x="90" y="262">SQLite WAL · Redis cache</text>
+          <text class="node-tag"   x="90" y="273">flights · seats · search</text>
+          <circle id="hd-catalog" r="4" cx="160" cy="228" fill="var(--text-dim)"/>
+          <text class="counter-badge" id="ec-catalog" x="160" y="243" fill="var(--text-dim)">0</text>
+        </g>
 
-      <!-- ── reservation-service node ── -->
-      <g id="node-reservation">
-        <rect class="node-rect" x="205" y="222" width="180" height="51" stroke="var(--col-reservation)"/>
-        <text class="node-label" x="295" y="237" style="fill:var(--col-reservation)">reservation-service</text>
-        <text class="node-sub"   x="295" y="251">:3002  ·  SQLite</text>
-        <text class="node-badge" x="295" y="264" style="fill:var(--text-dim)">lock  ·  booking</text>
-        <circle class="health-dot" id="hd-reservation" cx="377" cy="230" fill="var(--text-dim)"/>
-      </g>
+        <!-- ── reservation-service ── -->
+        <g id="node-reservation" class="node-group" data-node="reservation" style="pointer-events:bounding-box">
+          <rect class="node-bg" x="202" y="220" width="186" height="62" rx="4" stroke="var(--col-reservation)" stroke-width="1.5"/>
+          <rect class="node-stripe" x="202" y="220" width="186" height="3" rx="2" fill="var(--col-reservation)"/>
+          <text class="node-title" x="295" y="238" style="fill:var(--col-reservation)">reservation-service</text>
+          <text class="node-sub"   x="295" y="251">:3002 · Bun/ElysiaJS</text>
+          <text class="node-tag"   x="295" y="262">SQLite WAL · Redis lock</text>
+          <text class="node-tag"   x="295" y="273">lock · booking · events</text>
+          <circle id="hd-reservation" r="4" cx="380" cy="228" fill="var(--text-dim)"/>
+          <text class="counter-badge" id="ec-reservation" x="380" y="243" fill="var(--text-dim)">0</text>
+        </g>
 
-      <!-- ── payment-service node ── -->
-      <g id="node-payment">
-        <rect class="node-rect" x="428" y="222" width="148" height="51" stroke="var(--col-payment)"/>
-        <text class="node-label" x="502" y="237" style="fill:var(--col-payment)">payment-service</text>
-        <text class="node-sub"   x="502" y="251">:3003  ·  SQLite</text>
-        <text class="node-badge" x="502" y="264" style="fill:var(--text-dim)">pagamentos</text>
-        <circle class="health-dot" id="hd-payment" cx="568" cy="230" fill="var(--text-dim)"/>
-      </g>
+        <!-- ── payment-service ── -->
+        <g id="node-payment" class="node-group" data-node="payment" style="pointer-events:bounding-box">
+          <rect class="node-bg" x="422" y="220" width="156" height="62" rx="4" stroke="var(--col-payment)" stroke-width="1.2"/>
+          <rect class="node-stripe" x="422" y="220" width="156" height="3" rx="2" fill="var(--col-payment)"/>
+          <text class="node-title" x="500" y="238" style="fill:var(--col-payment)">payment-service</text>
+          <text class="node-sub"   x="500" y="251">:3003 · Bun/ElysiaJS</text>
+          <text class="node-tag"   x="500" y="262">SQLite WAL · Redis idem.</text>
+          <text class="node-tag"   x="500" y="273">MQ consumer · 90% ok</text>
+          <circle id="hd-payment" r="4" cx="570" cy="228" fill="var(--text-dim)"/>
+          <text class="counter-badge" id="ec-payment" x="570" y="243" fill="var(--text-dim)">0</text>
+        </g>
 
-      <!-- ── REDIS node ── -->
-      <g id="node-redis">
-        <rect class="node-rect" x="14" y="368" width="148" height="42" stroke="var(--col-redis)"/>
-        <text class="node-label" x="88" y="383" style="fill:var(--col-redis)">REDIS</text>
-        <text class="node-sub"   x="88" y="399">:6379  ·  lock  ·  cache</text>
-      </g>
+        <!-- ── REDIS ── -->
+        <g id="node-redis" class="node-group" data-node="redis" style="pointer-events:bounding-box">
+          <rect class="node-bg" x="12" y="370" width="156" height="52" rx="4" stroke="var(--col-redis)" stroke-width="1.2"/>
+          <rect class="node-stripe" x="12" y="370" width="156" height="3" rx="2" fill="var(--col-redis)"/>
+          <text class="node-title" x="90" y="388" style="fill:var(--col-redis);letter-spacing:3px">REDIS</text>
+          <text class="node-sub"   x="90" y="401">redis:7-alpine · :6379</text>
+          <text class="node-tag"   x="90" y="413">lock · cache · idempotência</text>
+          <text class="counter-badge" id="ec-redis" x="158" y="380" fill="var(--text-dim)">0</text>
+        </g>
 
-      <!-- ── RABBITMQ node ── -->
-      <g id="node-rabbitmq">
-        <rect class="node-rect" x="428" y="368" width="148" height="42" stroke="var(--col-rabbitmq)"/>
-        <text class="node-label" x="502" y="383" style="fill:var(--col-rabbitmq)">RABBITMQ</text>
-        <text class="node-sub"   x="502" y="399">:5672  ·  airline.events</text>
-      </g>
-
-      <!-- edge labels -->
-      <text x="307" y="79"  class="node-sub">HTTP</text>
-      <text x="138" y="168" class="node-sub" transform="rotate(-26,138,168)">REST</text>
-      <text x="307" y="185" class="node-sub">REST</text>
-      <text x="408" y="168" class="node-sub" transform="rotate(26,408,168)">REST</text>
-      <text x="36"  y="322" class="node-sub" transform="rotate(-90,36,322)">SET NX</text>
-      <text x="142" y="326" class="node-sub" transform="rotate(-34,142,326)">lock</text>
-      <text x="418" y="326" class="node-sub" transform="rotate(34,418,326)">publish</text>
-      <text x="514" y="324" class="node-sub" transform="rotate(90,514,324)">consume</text>
-    </svg>
+        <!-- ── RABBITMQ ── -->
+        <g id="node-rabbitmq" class="node-group" data-node="rabbitmq" style="pointer-events:bounding-box">
+          <rect class="node-bg" x="422" y="370" width="156" height="52" rx="4" stroke="var(--col-rabbitmq)" stroke-width="1.2"/>
+          <rect class="node-stripe" x="422" y="370" width="156" height="3" rx="2" fill="var(--col-rabbitmq)"/>
+          <text class="node-title" x="500" y="388" style="fill:var(--col-rabbitmq);letter-spacing:2px">RABBITMQ</text>
+          <text class="node-sub"   x="500" y="401">rabbitmq:3.13 · :5672</text>
+          <text class="node-tag"   x="500" y="413">airline.events · DLX · prefetch</text>
+          <text class="counter-badge" id="ec-rabbitmq" x="568" y="380" fill="var(--text-dim)">0</text>
+        </g>
+      </svg>
+    </div>
+    <div class="hint-banner" id="hint-banner">HOVER nos nós para ver logs · CLICK para focar</div>
   </div>
 
-  <!-- ── Event log ── -->
+  <!-- ── Log panel ── -->
   <div class="log-panel">
     <div class="log-header">
-      <span>EVENT LOG</span>
-      <span id="log-count" style="color:var(--amber)">0 eventos</span>
+      <div class="log-title">EVENT LOG <span id="log-count" style="color:var(--amber)">0 eventos</span></div>
+      <div class="log-filters">
+        <button class="filter-btn active" data-filter="all">ALL</button>
+        <button class="filter-btn" data-filter="lock">LOCK</button>
+        <button class="filter-btn" data-filter="db">DB TX</button>
+        <button class="filter-btn" data-filter="mq">MQ</button>
+        <button class="filter-btn" data-filter="status">STATUS</button>
+      </div>
     </div>
-    <div class="log-scroll" id="log-scroll"></div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--col-nginx)"></div>lock.acquired</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--col-redis)"></div>lock.failed</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--col-reservation)"></div>db.transaction</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--col-rabbitmq)"></div>rabbitmq.published</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#22cc55"></div>payment.succeeded</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--col-redis)"></div>payment.failed</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>reservation.confirmed</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f43f5e"></div>reservation.cancelled</div>
+    <div id="log-scroll" class="log-scroll"></div>
+    <div class="log-footer">
+      <span id="focus-label">sem foco</span>
+      <span id="filter-label" style="color:var(--amber)">filtro: ALL</span>
     </div>
   </div>
+</div>
 
+<!-- ── Node Tooltip ── -->
+<div id="node-tooltip">
+  <div class="tt-header">
+    <span class="tt-status unknown" id="tt-status">—</span>
+    <div class="tt-name" id="tt-name">—</div>
+    <div class="tt-tech" id="tt-tech">—</div>
+    <div class="tt-desc" id="tt-desc">—</div>
+  </div>
+  <div class="tt-section-label">ATIVIDADE · últimos 60s</div>
+  <div class="tt-spark" id="tt-spark"></div>
+  <div class="tt-section-label">EVENTOS RECENTES</div>
+  <div class="tt-events" id="tt-events"></div>
 </div>
 
 <script>
-// ── Colors & event metadata ─────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+const NODES = {
+  client:      { label:'CLIENT',            tech:'Browser',                   desc:'Origem das requisições HTTP/REST',                   color:'#6a7a8a', cx:295, cy:34,  filter:null },
+  nginx:       { label:'NGINX',             tech:'nginx:1.27-alpine · :80',   desc:'API Gateway · rate limiting · least_conn · ip_hash', color:'#f0a030', cx:295, cy:121, hurl:null },
+  catalog:     { label:'flight-catalog',    tech:'Bun · ElysiaJS · SQLite WAL · :3001', desc:'Catálogo de voos, assentos, cache Redis TTL 5min', color:'#4aa8f0', cx:90,  cy:251, hurl:'/api/catalog/health' },
+  reservation: { label:'reservation-service', tech:'Bun · ElysiaJS · SQLite WAL · :3002', desc:'Lock Redis + transação SQLite + publisher RabbitMQ', color:'#3ddc84', cx:295, cy:251, hurl:'/api/booking/health' },
+  payment:     { label:'payment-service',   tech:'Bun · ElysiaJS · SQLite WAL · :3003', desc:'Consumer assíncrono, idempotência Redis, mock 90% ok', color:'#a87fff', cx:500, cy:251, hurl:'/api/payment/health' },
+  redis:       { label:'REDIS',             tech:'redis:7-alpine · :6379',    desc:'Lock distribuído SET NX EX, cache busca TTL 5min',   color:'#f05050', cx:90,  cy:396, hurl:null },
+  rabbitmq:    { label:'RABBITMQ',          tech:'rabbitmq:3.13-management · :5672', desc:'Topic exchange airline.events, DLX, prefetch=1', color:'#ff8c42', cx:500, cy:396, hurl:null },
+}
+
+const PATH_NODES = {
+  'p-client-nginx':         ['client','nginx'],
+  'p-nginx-catalog':        ['nginx','catalog'],
+  'p-nginx-reservation':    ['nginx','reservation'],
+  'p-nginx-payment':        ['nginx','payment'],
+  'p-catalog-redis':        ['catalog','redis'],
+  'p-reservation-redis':    ['reservation','redis'],
+  'p-reservation-rabbitmq': ['reservation','rabbitmq'],
+  'p-payment-rabbitmq':     ['payment','rabbitmq'],
+}
+const NODE_PATHS = {}
+for (const [pid,[a,b]] of Object.entries(PATH_NODES)) {
+  ;(NODE_PATHS[a] ||= []).push(pid);
+  (NODE_PATHS[b] ||= []).push(pid)
+}
+
 const EVENT_META = {
-  'lock.acquired':         { color: '#f0a030', label: 'LOCK ACQ',    node: 'redis'       },
-  'lock.failed':           { color: '#f05050', label: 'LOCK FAIL',   node: null          },
-  'lock.released':         { color: '#5a6a7a', label: 'LOCK REL',    node: null          },
-  'db.transaction':        { color: '#3ddc84', label: 'DB TX',       node: 'reservation' },
-  'rabbitmq.published':    { color: '#ff8c42', label: 'MQ PUBLISH',  node: 'rabbitmq'    },
-  'payment.succeeded':     { color: '#22cc55', label: 'PAY OK',      node: 'payment'     },
-  'payment.failed':        { color: '#f05050', label: 'PAY FAIL',    node: 'payment'     },
-  'reservation.confirmed': { color: '#4aa8f0', label: 'CONFIRMED',   node: 'client'      },
-  'reservation.cancelled': { color: '#f43f5e', label: 'CANCELLED',   node: null          },
+  'lock.acquired':         { color:'#f0a030', label:'LOCK ACQ'   },
+  'lock.failed':           { color:'#f05050', label:'LOCK FAIL'  },
+  'lock.released':         { color:'#4a5a6a', label:'LOCK REL'   },
+  'db.transaction':        { color:'#3ddc84', label:'DB TX'      },
+  'rabbitmq.published':    { color:'#ff8c42', label:'MQ PUBLISH' },
+  'payment.succeeded':     { color:'#22cc55', label:'PAY OK'     },
+  'payment.failed':        { color:'#f05050', label:'PAY FAIL'   },
+  'reservation.confirmed': { color:'#4aa8f0', label:'CONFIRMED'  },
+  'reservation.cancelled': { color:'#f43f5e', label:'CANCELLED'  },
 }
 
-// event type → list of {pathId, color, reverse, delay}
 const EVENT_FLOWS = {
-  'lock.acquired': [
-    { path: 'p-client-nginx',       color: '#f0a030', delay:   0 },
-    { path: 'p-nginx-reservation',  color: '#f0a030', delay: 250 },
-    { path: 'p-reservation-redis',  color: '#f05050', delay: 500 },
-  ],
-  'lock.failed': [
-    { path: 'p-reservation-redis',  color: '#f05050', delay: 0, reverse: true },
-  ],
-  'lock.released': [
-    { path: 'p-reservation-redis',  color: '#5a6a7a', delay: 0, reverse: true },
-  ],
-  'db.transaction': [],
-  'rabbitmq.published': [
-    { path: 'p-reservation-rabbitmq', color: '#ff8c42', delay: 0 },
-  ],
-  'payment.succeeded': [
-    { path: 'p-payment-rabbitmq',     color: '#22cc55', delay:   0, reverse: true },
-    { path: 'p-reservation-rabbitmq', color: '#22cc55', delay: 250, reverse: true },
-  ],
-  'payment.failed': [
-    { path: 'p-payment-rabbitmq',     color: '#f05050', delay:   0, reverse: true },
-    { path: 'p-reservation-rabbitmq', color: '#f05050', delay: 250, reverse: true },
-  ],
-  'reservation.confirmed': [
-    { path: 'p-nginx-reservation',  color: '#4aa8f0', delay:   0, reverse: true },
-    { path: 'p-client-nginx',       color: '#4aa8f0', delay: 300, reverse: true },
-  ],
-  'reservation.cancelled': [
-    { path: 'p-nginx-reservation',  color: '#f43f5e', delay:   0, reverse: true },
-    { path: 'p-client-nginx',       color: '#f43f5e', delay: 300, reverse: true },
-  ],
+  'lock.acquired':         [{p:'p-client-nginx',delay:0},{p:'p-nginx-reservation',delay:200},{p:'p-reservation-redis',delay:420}],
+  'lock.failed':           [{p:'p-reservation-redis',delay:0,rev:true}],
+  'lock.released':         [{p:'p-reservation-redis',delay:0,rev:true,dim:true}],
+  'db.transaction':        [],
+  'rabbitmq.published':    [{p:'p-reservation-rabbitmq',delay:0}],
+  'payment.succeeded':     [{p:'p-payment-rabbitmq',delay:0,rev:true},{p:'p-reservation-rabbitmq',delay:220,rev:true}],
+  'payment.failed':        [{p:'p-payment-rabbitmq',delay:0,rev:true},{p:'p-reservation-rabbitmq',delay:220,rev:true}],
+  'reservation.confirmed': [{p:'p-nginx-reservation',delay:0,rev:true},{p:'p-client-nginx',delay:280,rev:true}],
+  'reservation.cancelled': [{p:'p-nginx-reservation',delay:0,rev:true},{p:'p-client-nginx',delay:280,rev:true}],
 }
 
-// node → flow line ids to activate
-const NODE_FLOWS = {
-  'client':      ['f-client-nginx'],
-  'nginx':       ['f-nginx-catalog','f-nginx-reservation','f-nginx-payment'],
-  'catalog':     ['f-nginx-catalog','f-catalog-redis'],
-  'reservation': ['f-nginx-reservation','f-reservation-redis','f-reservation-rabbitmq'],
-  'payment':     ['f-nginx-payment','f-payment-rabbitmq'],
-  'redis':       ['f-reservation-redis','f-catalog-redis'],
-  'rabbitmq':    ['f-reservation-rabbitmq','f-payment-rabbitmq'],
+const NODE_ACTIVE = {
+  'lock.acquired':         ['reservation','redis','nginx','client'],
+  'lock.failed':           ['reservation','redis'],
+  'lock.released':         ['reservation','redis'],
+  'db.transaction':        ['reservation'],
+  'rabbitmq.published':    ['reservation','rabbitmq'],
+  'payment.succeeded':     ['payment','rabbitmq','reservation'],
+  'payment.failed':        ['payment','rabbitmq','reservation'],
+  'reservation.confirmed': ['reservation','nginx','client'],
+  'reservation.cancelled': ['reservation','nginx','client'],
 }
 
-// ── State ───────────────────────────────────────────────────────────────────
-let lastEventId = 0
-let totalEvents = 0
-let activeFlows = 0
-const eventTimes = []   // timestamps of recent events (for rpm calc)
-let servicesOnline = 0
-const svg = document.getElementById('arch-svg')
-const packetsLayer = document.getElementById('packets')
-
-// ── Clock ───────────────────────────────────────────────────────────────────
-function updateClock() {
-  document.getElementById('clock').textContent =
-    new Date().toLocaleTimeString('pt-BR', { hour12: false })
-}
-setInterval(updateClock, 1000)
-updateClock()
-
-// ── Packet animation ────────────────────────────────────────────────────────
-function animatePacket(pathId, color, reverse = false, duration = 650) {
-  const path = document.getElementById(pathId)
-  if (!path) return
-  const len = path.getTotalLength()
-
-  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-  circle.setAttribute('r', '5')
-  circle.setAttribute('fill', color)
-  circle.setAttribute('filter', `drop-shadow(0 0 5px ${color})`)
-  packetsLayer.appendChild(circle)
-
-  const startTime = performance.now()
-  function frame(now) {
-    const p = Math.min((now - startTime) / duration, 1)
-    // ease in-out cubic
-    const t = p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p+2,3)/2
-    const pt = path.getPointAtLength(reverse ? (1-t)*len : t*len)
-    circle.setAttribute('cx', pt.x)
-    circle.setAttribute('cy', pt.y)
-    if (p < 1) requestAnimationFrame(frame)
-    else packetsLayer.removeChild(circle)
-  }
-  requestAnimationFrame(frame)
+const FILTER_FN = {
+  all:    () => true,
+  lock:   e => e.type.startsWith('lock.'),
+  db:     e => e.type === 'db.transaction',
+  mq:     e => e.type === 'rabbitmq.published' || e.type.startsWith('payment.'),
+  status: e => ['reservation.confirmed','reservation.cancelled'].includes(e.type),
 }
 
-// ── Node glow ───────────────────────────────────────────────────────────────
-const glowTimers = {}
-function glowNode(nodeId, duration = 1200) {
-  const el = document.getElementById('node-' + nodeId)
-  if (!el) return
-  clearTimeout(glowTimers[nodeId])
-  el.classList.add('glow-' + nodeId)
-  glowTimers[nodeId] = setTimeout(() => el.classList.remove('glow-' + nodeId), duration)
+const NODE_FILTER = {
+  client:      e => ['reservation.confirmed','reservation.cancelled','lock.acquired'].includes(e.type),
+  nginx:       e => ['reservation.confirmed','reservation.cancelled','lock.acquired'].includes(e.type),
+  catalog:     e => e.source==='flight-catalog' || e.target==='flight-catalog',
+  reservation: e => e.source==='reservation-service' || e.target==='reservation-service',
+  payment:     e => e.source==='payment-service'  || e.target==='payment-service' || e.type.startsWith('payment.'),
+  redis:       e => e.target==='redis'    || e.source==='redis',
+  rabbitmq:    e => e.target==='rabbitmq' || e.source==='rabbitmq' || e.type==='rabbitmq.published',
 }
 
-// ── Flow line activation ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let lastEventId = 0, totalEvents = 0, activeFlows = 0
+const eventLog    = []          // newest first
+const eventTimes  = []          // timestamps for rpm
+const nodeCounters= Object.fromEntries(Object.keys(NODES).map(k=>[k,0]))
+const healthState = {}
+let currentFilter = 'all'
+let focusedNode   = null
+let hoveredNode   = null
+let mouseX = 0, mouseY = 0
+
+const svg         = document.getElementById('arch-svg')
+const packets     = document.getElementById('packets-layer')
+const effects     = document.getElementById('effects-layer')
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLOCK
+// ─────────────────────────────────────────────────────────────────────────────
+function tick() { document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR',{hour12:false}) }
+setInterval(tick,1000); tick()
+
+const diagramPanel = document.getElementById('diagram-panel')
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PACKET ANIMATION (multi-particle burst)
+// ─────────────────────────────────────────────────────────────────────────────
+function animatePacket(pathId, color, reverse=false, delay=0, size=5) {
+  setTimeout(() => {
+    const path = document.getElementById(pathId)
+    if (!path) return
+    const len = path.getTotalLength()
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle')
+    c.setAttribute('r', size)
+    c.setAttribute('fill', color)
+    c.setAttribute('filter', `drop-shadow(0 0 ${size+2}px ${color})`)
+    packets.appendChild(c)
+    const dur = 600 + Math.random()*120
+    const t0  = performance.now()
+    function fr(now) {
+      let p = Math.min((now-t0)/dur, 1)
+      const ease = p<.5 ? 4*p*p*p : 1-Math.pow(-2*p+2,3)/2
+      const pt = path.getPointAtLength((reverse ? 1-ease : ease) * len)
+      c.setAttribute('cx', pt.x)
+      c.setAttribute('cy', pt.y)
+      if (p < 1) requestAnimationFrame(fr)
+      else packets.removeChild(c)
+    }
+    requestAnimationFrame(fr)
+  }, delay)
+}
+
+function firePacketBurst(pathId, color, reverse=false, baseDelay=0) {
+  animatePacket(pathId, color, reverse, baseDelay, 4)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PULSE RING
+// ─────────────────────────────────────────────────────────────────────────────
+function pulseNode(nodeId, color) {
+  const n = NODES[nodeId]; if (!n) return
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle')
+  circle.setAttribute('cx', n.cx)
+  circle.setAttribute('cy', n.cy)
+  circle.setAttribute('r', '18')
+  circle.setAttribute('fill', 'none')
+  circle.setAttribute('stroke', color)
+  circle.setAttribute('stroke-width', '1.5')
+  effects.appendChild(circle)
+  let r = 18, op = .9
+  const iv = setInterval(() => {
+    r += 2.8; op -= .055
+    circle.setAttribute('r', r)
+    circle.setAttribute('opacity', Math.max(op,0))
+    if (op <= 0) { clearInterval(iv); try{ effects.removeChild(circle) }catch{} }
+  }, 16)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOW LINE ACTIVATION
+// ─────────────────────────────────────────────────────────────────────────────
 const flowTimers = {}
-function activateFlow(flowId, duration = 2000) {
-  const el = document.getElementById(flowId)
-  if (!el) return
+function activateFlow(flowId, dur=2400) {
+  const el = document.getElementById(flowId); if (!el) return
   clearTimeout(flowTimers[flowId])
   el.classList.add('flowing')
-  flowTimers[flowId] = setTimeout(() => el.classList.remove('flowing'), duration)
+  flowTimers[flowId] = setTimeout(() => el.classList.remove('flowing'), dur)
 }
 
-// ── Process incoming events ─────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// NODE GLOW
+// ─────────────────────────────────────────────────────────────────────────────
+const nodeGlowFilters = {
+  nginx:'gf-amber', catalog:'gf-blue', reservation:'gf-green',
+  payment:'gf-purple', redis:'gf-red', rabbitmq:'gf-orange',
+}
+const glowTimers = {}
+function glowNode(nodeId, dur=1100) {
+  const el = document.getElementById('node-'+nodeId); if (!el) return
+  const bg = el.querySelector('.node-bg'); if (!bg) return
+  clearTimeout(glowTimers[nodeId])
+  const f = nodeGlowFilters[nodeId]
+  if (f) bg.setAttribute('filter',`url(#${f})`)
+  glowTimers[nodeId] = setTimeout(() => bg.removeAttribute('filter'), dur)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROCESS EVENT
+// ─────────────────────────────────────────────────────────────────────────────
 function processEvent(ev) {
-  const meta  = EVENT_META[ev.type] || { color: '#8899aa', label: ev.type, node: null }
+  const meta  = EVENT_META[ev.type] || {color:'#6a7a8a',label:ev.type}
   const flows = EVENT_FLOWS[ev.type] || []
 
-  // animate packets
-  flows.forEach(({ path, color, delay = 0, reverse = false }) => {
-    setTimeout(() => animatePacket(path, color, reverse), delay)
-    // activate flow line
-    setTimeout(() => activateFlow('f-' + path.slice(2), 2500), delay)
+  flows.forEach(({p:pathId, color, delay=0, rev=false}) => {
+    const flowId = 'f-' + pathId.slice(2)
+    firePacketBurst(pathId, color||meta.color, rev, delay)
+    setTimeout(() => activateFlow(flowId), delay)
+  });
+
+  (NODE_ACTIVE[ev.type]||[]).forEach(nid => {
+    pulseNode(nid, NODES[nid]?.color||'#fff')
+    glowNode(nid)
+    nodeCounters[nid]++
+    const ec = document.getElementById('ec-'+nid)
+    if (ec) ec.textContent = nodeCounters[nid]
   })
 
-  // glow affected nodes
-  if (meta.node) glowNode(meta.node)
-  if (ev.type === 'lock.acquired') { glowNode('reservation'); glowNode('redis') }
-  if (ev.type === 'rabbitmq.published') { glowNode('reservation'); glowNode('rabbitmq') }
-  if (ev.type === 'payment.succeeded') { glowNode('payment'); glowNode('reservation') }
-  if (ev.type === 'reservation.confirmed') { glowNode('nginx') }
-
-  // increment active flows counter (lock.acquired +1, confirmed/cancelled -1)
   if (ev.type === 'lock.acquired') activeFlows++
-  if (['reservation.confirmed','reservation.cancelled'].includes(ev.type) && activeFlows > 0) activeFlows--
-  document.getElementById('stat-flows').textContent = activeFlows
+  if (['reservation.confirmed','reservation.cancelled'].includes(ev.type) && activeFlows>0) activeFlows--
+  document.getElementById('s-flows').textContent = activeFlows
 
-  // log entry
   appendLogEntry(ev, meta)
 }
 
-// ── Log entry ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// LOG ENTRY
+// ─────────────────────────────────────────────────────────────────────────────
 function appendLogEntry(ev, meta) {
-  const scroll = document.getElementById('log-scroll')
-  const entry  = document.createElement('div')
-  entry.className = 'log-entry'
-
   const t = ev.created_at
-    ? new Date(ev.created_at + (ev.created_at.endsWith('Z') ? '' : 'Z'))
-        .toLocaleTimeString('pt-BR', { hour12: false, fractionalSecondDigits: 3 })
-    : '--:--:--.---'
+    ? new Date(ev.created_at+'Z').toLocaleTimeString('pt-BR',{hour12:false,fractionalSecondDigits:2})
+    : '--:--:--'
 
-  entry.innerHTML = `
-    <span class="log-time">${t}</span>
-    <span class="log-type" style="color:${meta.color}">${meta.label}</span>
-    <span class="log-label" title="${ev.label || ''}">${ev.label || `${ev.source} → ${ev.target}`}</span>
-  `
-  // prepend (newest at top, but container is column-reverse so append = top)
-  scroll.appendChild(entry)
+  ev._meta = meta
+  ev._t    = t
+  eventLog.unshift(ev)
+  if (eventLog.length > 300) eventLog.pop()
 
-  // cap log to 80 entries
-  while (scroll.children.length > 80) scroll.removeChild(scroll.firstChild)
+  if (!FILTER_FN[currentFilter](ev)) return
+  if (focusedNode && !NODE_FILTER[focusedNode]?.(ev)) return
+  renderLogEntry(ev, true)
 }
 
-// ── Stats update ─────────────────────────────────────────────────────────────
-function updateStats(newCount) {
+function renderLogEntry(ev, prepend=false) {
+  const scroll = document.getElementById('log-scroll')
+  const div = document.createElement('div')
+  div.className = 'log-entry'
+  div.dataset.evid = ev.id
+  div.innerHTML = `
+    <span class="le-time">${ev._t}</span>
+    <span class="le-type" style="color:${ev._meta.color}">${ev._meta.label}</span>
+    <span class="le-label" title="${ev.label||''}">${ev.label||`${ev.source}→${ev.target}`}</span>`
+  div.addEventListener('mouseenter', () => highlightFlow(ev))
+  div.addEventListener('mouseleave', clearHighlight)
+  scroll.appendChild(div)
+  while (scroll.children.length > 100) scroll.removeChild(scroll.firstChild)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOG ENTRY HOVER → HIGHLIGHT PATH
+// ─────────────────────────────────────────────────────────────────────────────
+let highlightCleanup = null
+function highlightFlow(ev) {
+  clearHighlight()
+  const flows = EVENT_FLOWS[ev.type]||[]
+  const active = []
+  flows.forEach(({p:pathId, color}) => {
+    const el = document.getElementById(pathId); if (!el) return
+    el.style.stroke = color
+    el.style.strokeWidth = '3'
+    el.style.opacity = '1'
+    active.push(el)
+  })
+  highlightCleanup = () => active.forEach(el => {
+    el.style.stroke = ''
+    el.style.strokeWidth = ''
+    el.style.opacity = ''
+  })
+}
+function clearHighlight() { if (highlightCleanup) { highlightCleanup(); highlightCleanup=null } }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FOCUS MODE
+// ─────────────────────────────────────────────────────────────────────────────
+function getAdjacentNodes(nodeId) {
+  const adj = new Set([nodeId])
+  for (const [pid,[a,b]] of Object.entries(PATH_NODES)) {
+    if (a===nodeId||b===nodeId) { adj.add(a); adj.add(b) }
+  }
+  return adj
+}
+
+function applyFocus(nodeId) {
+  focusedNode = nodeId
+  const adj  = nodeId ? getAdjacentNodes(nodeId) : null
+  const paths = nodeId ? (NODE_PATHS[nodeId]||[]) : null
+
+  for (const id of Object.keys(NODES)) {
+    const el = document.getElementById('node-'+id)
+    if (el) el.classList.toggle('dim', nodeId!=null && !adj.has(id))
+  }
+  for (const pid of Object.keys(PATH_NODES)) {
+    const el  = document.getElementById(pid)
+    const fel = document.getElementById('f-'+pid.slice(2))
+    const vis = !nodeId || paths.includes(pid)
+    if (el)  el.classList.toggle('dim', !vis)
+    if (fel) fel.classList.toggle('dim', !vis)
+  }
+
+  document.getElementById('focus-label').innerHTML = nodeId
+    ? `<span class="focus-hint">FOCO: ${NODES[nodeId]?.label||nodeId}</span> — click p/ desfocar`
+    : 'sem foco'
+
+  rebuildLog()
+}
+
+function rebuildLog() {
+  const scroll = document.getElementById('log-scroll')
+  scroll.innerHTML = ''
+  const filtered = eventLog.filter(ev => {
+    if (!FILTER_FN[currentFilter](ev)) return false
+    if (focusedNode && !NODE_FILTER[focusedNode]?.(ev)) return false
+    return true
+  }).slice(0, 80)
+  // reversed so newest appear at top (column-reverse container)
+  for (let i = filtered.length-1; i >= 0; i--) renderLogEntry(filtered[i])
+  document.getElementById('log-count').textContent = `${totalEvents} eventos`
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NODE INTERACTION (hover + click)
+// ─────────────────────────────────────────────────────────────────────────────
+const tt = document.getElementById('node-tooltip')
+
+function showTooltip(nodeId) {
+  hoveredNode = nodeId
+  const n = NODES[nodeId]
+  document.getElementById('tt-name').textContent  = n.label
+  document.getElementById('tt-tech').textContent  = n.tech
+  document.getElementById('tt-desc').textContent  = n.desc
+  document.getElementById('tt-name').style.color  = n.color
+
+  const statusEl = document.getElementById('tt-status')
+  const hs = healthState[nodeId]
+  if      (hs === 'ok')   { statusEl.textContent='● ONLINE';  statusEl.className='tt-status ok'  }
+  else if (hs === 'down') { statusEl.textContent='● OFFLINE'; statusEl.className='tt-status down' }
+  else                    { statusEl.textContent='—';          statusEl.className='tt-status unknown' }
+
+  renderSparkline(nodeId)
+  renderTooltipEvents(nodeId)
+
+  tt.classList.add('visible')
+  positionTooltip()
+}
+
+function hideTooltip() { hoveredNode = null; tt.classList.remove('visible') }
+
+function positionTooltip() {
+  const tw = tt.offsetWidth  || 280
+  const th = tt.offsetHeight || 180
+  let x = mouseX + 18
+  let y = mouseY - 12
+  if (x + tw > window.innerWidth  - 8) x = mouseX - tw - 18
+  if (y + th > window.innerHeight - 8) y = window.innerHeight - th - 8
+  tt.style.left = x + 'px'
+  tt.style.top  = y + 'px'
+}
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY
+  if (hoveredNode) positionTooltip()
+})
+
+function renderSparkline(nodeId) {
+  const n   = NODES[nodeId]
   const now = Date.now()
-  eventTimes.push(now)
-  // keep only last 60s
-  while (eventTimes.length && eventTimes[0] < now - 60000) eventTimes.shift()
-  document.getElementById('stat-rate').textContent  = eventTimes.length
-  document.getElementById('stat-total').textContent = totalEvents
-  document.getElementById('log-count').textContent  = `${totalEvents} eventos`
+  const buckets = new Array(15).fill(0)
+  const filterFn = NODE_FILTER[nodeId] || (() => false)
+  for (const ev of eventLog) {
+    if (!filterFn(ev)) continue
+    const ts = ev.created_at ? new Date(ev.created_at+'Z').getTime() : 0
+    const age = (now - ts) / 1000
+    if (age < 0 || age >= 75) continue
+    const b = Math.floor(age / 5)
+    if (b < 15) buckets[14-b]++
+  }
+  const max = Math.max(...buckets, 1)
+  const W=200, H=28, bw = W/15
+  const bars = buckets.map((v,i) => {
+    const h = Math.max(2, (v/max)*H)
+    const x = i*bw, y = H-h
+    const op = 0.3 + 0.7*(v/max)
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-1).toFixed(1)}" height="${h.toFixed(1)}" fill="${n.color}" opacity="${op.toFixed(2)}" rx="1"/>`
+  }).join('')
+  document.getElementById('tt-spark').innerHTML =
+    `<svg width="${W}" height="${H}" style="display:block">${bars}</svg>`
 }
 
-// ── Poll /api/events ─────────────────────────────────────────────────────────
+function renderTooltipEvents(nodeId) {
+  const filterFn = NODE_FILTER[nodeId]
+  const evEl = document.getElementById('tt-events')
+  if (!filterFn) { evEl.innerHTML = '<div class="tt-empty">sem dados</div>'; return }
+  const relevant = eventLog.filter(filterFn).slice(0, 7)
+  if (!relevant.length) { evEl.innerHTML = '<div class="tt-empty">nenhum evento ainda</div>'; return }
+  evEl.innerHTML = relevant.map(ev => {
+    const m = ev._meta || EVENT_META[ev.type] || {color:'#666',label:ev.type}
+    return `<div class="tt-ev-row">
+      <span class="tt-ev-time">${ev._t||'--'}</span>
+      <span class="tt-ev-type" style="color:${m.color}">${m.label}</span>
+      <span class="tt-ev-label" title="${ev.label||''}">${ev.label||''}</span>
+    </div>`
+  }).join('')
+}
+
+// Wire node events
+for (const [nodeId] of Object.entries(NODES)) {
+  const el = document.getElementById('node-'+nodeId)
+  if (!el) continue
+  el.addEventListener('mouseenter', () => showTooltip(nodeId))
+  el.addEventListener('mouseleave', hideTooltip)
+  el.addEventListener('click', e => {
+    e.stopPropagation()
+    applyFocus(focusedNode === nodeId ? null : nodeId)
+  })
+}
+diagramPanel.addEventListener('click', () => applyFocus(null))
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTER BUTTONS
+// ─────────────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    currentFilter = btn.dataset.filter
+    document.getElementById('filter-label').textContent = 'filtro: ' + btn.dataset.filter.toUpperCase()
+    rebuildLog()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POLL /api/events
+// ─────────────────────────────────────────────────────────────────────────────
+let initialized = false
+
 async function fetchEvents() {
   try {
-    const url = `/api/events?since=${lastEventId}&limit=50`
-    const res  = await fetch(url, { signal: AbortSignal.timeout(4000) })
+    const res = await fetch(`/api/events?since=${lastEventId}&limit=50`, {signal:AbortSignal.timeout(4000)})
     if (!res.ok) return
-    const events = await res.json()
-    // events are ordered DESC, so process in reverse (oldest first)
-    const ordered = [...events].reverse()
-    for (const ev of ordered) {
-      if (ev.id > lastEventId) {
+    const evts = await res.json()
+    const ordered = [...evts].reverse()
+
+    if (!initialized) {
+      // Primeira carga: apenas registra o cursor e popula o log histórico sem animar
+      for (const ev of ordered) {
+        if (ev.id > lastEventId) lastEventId = ev.id
+        const meta = EVENT_META[ev.type] || {color:'#6a7a8a', label:ev.type}
+        ev._meta = meta
+        ev._t = ev.created_at
+          ? new Date(ev.created_at+'Z').toLocaleTimeString('pt-BR',{hour12:false,fractionalSecondDigits:2})
+          : '--:--:--'
+        eventLog.unshift(ev)
+      }
+      totalEvents = eventLog.length
+      initialized = true
+      rebuildLog()
+    } else {
+      // Eventos realmente novos: anima
+      for (const ev of ordered) {
+        if (ev.id <= lastEventId) continue
         lastEventId = ev.id
         totalEvents++
-        processEvent(ev)
         eventTimes.push(Date.now())
+        processEvent(ev)
       }
     }
-    // trim event times window
-    const now = Date.now()
-    while (eventTimes.length && eventTimes[0] < now - 60000) eventTimes.shift()
-    document.getElementById('stat-rate').textContent  = eventTimes.length
-    document.getElementById('stat-total').textContent = totalEvents
-    document.getElementById('log-count').textContent  = `${totalEvents} eventos`
-  } catch { /* ignore, retry next tick */ }
-}
 
+    const now = Date.now()
+    while (eventTimes.length && eventTimes[0] < now-60000) eventTimes.shift()
+    document.getElementById('s-rpm').textContent    = eventTimes.length
+    document.getElementById('s-total').textContent  = totalEvents
+    document.getElementById('log-count').textContent = `${totalEvents} eventos`
+
+    if (hoveredNode) { renderSparkline(hoveredNode); renderTooltipEvents(hoveredNode) }
+  } catch { /* retry */ }
+}
 setInterval(fetchEvents, 1200)
 fetchEvents()
 
-// ── Health checks ────────────────────────────────────────────────────────────
-const HEALTH_ENDPOINTS = [
-  { id: 'catalog',     url: '/api/catalog/health'  },
-  { id: 'reservation', url: '/api/booking/health'  },
-  { id: 'payment',     url: '/api/payment/health'  },
+// ─────────────────────────────────────────────────────────────────────────────
+// HEALTH CHECKS
+// ─────────────────────────────────────────────────────────────────────────────
+const HEALTH_CHECKS = [
+  {nodeId:'catalog',     url:'/api/catalog/health'},
+  {nodeId:'reservation', url:'/api/booking/health'},
+  {nodeId:'payment',     url:'/api/payment/health'},
 ]
 
 async function checkHealth() {
   let online = 0
-  for (const { id, url } of HEALTH_ENDPOINTS) {
-    const dot = document.getElementById('hd-' + id)
+  for (const {nodeId, url} of HEALTH_CHECKS) {
+    const dot = document.getElementById('hd-'+nodeId)
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(3000) })
-      if (res.ok) {
-        dot.setAttribute('fill', '#3ddc84')
-        online++
-      } else {
-        dot.setAttribute('fill', '#f0a030')
-      }
+      const r = await fetch(url, {signal:AbortSignal.timeout(3000)})
+      const ok = r.ok
+      healthState[nodeId] = ok ? 'ok' : 'down'
+      if (dot) dot.setAttribute('fill', ok ? 'var(--green)' : 'var(--amber)')
+      if (ok) online++
     } catch {
-      dot.setAttribute('fill', '#f05050')
+      healthState[nodeId] = 'down'
+      if (dot) dot.setAttribute('fill','var(--red)')
     }
   }
-  servicesOnline = online
-  const el = document.getElementById('stat-services')
-  el.textContent  = online
-  el.style.color  = online === 3 ? 'var(--green)' : online > 0 ? 'var(--amber)' : 'var(--red)'
-}
+  // client and nginx always assumed ok if page loads
+  healthState['client'] = 'ok'
+  healthState['nginx']  = 'ok'
+  const sEl = document.getElementById('s-svcs')
+  sEl.textContent = online
+  sEl.style.color = online===3 ? 'var(--green)' : online>0 ? 'var(--amber)' : 'var(--red)'
 
+  if (hoveredNode && ['catalog','reservation','payment'].includes(hoveredNode)) {
+    const s = document.getElementById('tt-status')
+    const hs = healthState[hoveredNode]
+    if      (hs==='ok')   { s.textContent='● ONLINE';  s.className='tt-status ok' }
+    else if (hs==='down') { s.textContent='● OFFLINE'; s.className='tt-status down' }
+  }
+}
 setInterval(checkHealth, 10000)
 checkHealth()
+
+// hide hint after first interaction
+let hintHidden = false
+function hideHint() { if (hintHidden) return; hintHidden=true; document.getElementById('hint-banner').style.opacity='0' }
+diagramPanel.addEventListener('mousemove', hideHint, {once:true})
 </script>
 </body>
 </html>
