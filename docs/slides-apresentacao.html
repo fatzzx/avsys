@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AVSYS — Introdução e Metodologia</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #040c1f;
+      --surface:  #0a1628;
+      --surface2: #0f1e38;
+      --border:   rgba(79,142,247,0.2);
+      --accent:   #4f8ef7;
+      --accent2:  #a78bfa;
+      --text:     #e8edf7;
+      --text2:    #8ba4c8;
+      --text3:    #c4b5fd;
+      --green:    #34d399;
+      --yellow:   #fbbf24;
+      --red:      #f87171;
+      --r:        10px;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── deck ────────────────────────────────── */
+    #deck {
+      position: relative;
+      width: 100vw; height: 100vh;
+    }
+
+    .slide {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: min(960px, 94vw);
+      aspect-ratio: 16 / 9;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) translateX(50px);
+      transition: opacity .32s ease, transform .32s ease;
+      overflow: hidden;
+    }
+    .slide.active  { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) translateX(0); }
+    .slide.leaving { opacity: 0; transform: translate(-50%, -50%) translateX(-50px); transition: opacity .22s ease, transform .22s ease; }
+
+    /* ── progress + nav ──────────────────────── */
+    #progress {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width .32s ease; z-index: 100;
+    }
+
+    #nav {
+      position: fixed; bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px; z-index: 100;
+    }
+    #nav button {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+      cursor: pointer; font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .18s, border-color .18s;
+    }
+    #nav button:hover { background: var(--surface2); border-color: var(--accent); }
+    #counter {
+      font-size: 12px; color: var(--text2);
+      min-width: 52px; text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* hint keys */
+    #hint {
+      position: fixed; bottom: 18px; right: 24px;
+      font-size: 11px; color: rgba(139,164,200,0.45);
+      z-index: 100;
+    }
+
+    /* ── COVER ───────────────────────────────── */
+    .slide-cover {
+      align-items: center; justify-content: center; text-align: center;
+      overflow: hidden;
+    }
+    .slide-cover::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(79,142,247,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,142,247,.05) 1px, transparent 1px);
+      background-size: 38px 38px;
+    }
+    .slide-cover::after {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 460px; height: 220px;
+      background: radial-gradient(ellipse, rgba(79,142,247,.13) 0%, transparent 68%);
+    }
+    .cover-content { position: relative; z-index: 1; }
+    .cover-tag {
+      display: inline-block;
+      font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--accent); border: 1px solid var(--border);
+      padding: 4px 12px; border-radius: 20px; margin-bottom: 18px;
+    }
+    .cover-title {
+      font-size: clamp(30px, 5vw, 52px);
+      font-weight: 800; letter-spacing: -.03em; line-height: 1;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff 40%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cover-subtitle {
+      font-size: clamp(13px, 1.7vw, 19px);
+      color: var(--text2); margin-bottom: 22px; line-height: 1.4;
+    }
+    .cover-authors { font-size: clamp(10px, 1.2vw, 13px); color: var(--text3); }
+
+    /* ── SECTION BREAK ───────────────────────── */
+    .slide-section {
+      align-items: center; justify-content: center; text-align: center;
+      overflow: hidden;
+    }
+    .slide-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(79,142,247,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,142,247,.04) 1px, transparent 1px);
+      background-size: 38px 38px;
+    }
+    .section-bg-num {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      font-size: clamp(80px,14vw,130px);
+      font-weight: 900; letter-spacing: -.05em;
+      color: rgba(79,142,247,.06);
+      user-select: none; z-index: 0;
+    }
+    .section-content { position: relative; z-index: 1; }
+    .section-eyebrow {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 8px; font-weight: 600;
+    }
+    .section-heading {
+      font-size: clamp(28px, 5vw, 52px);
+      font-weight: 700; letter-spacing: -.03em;
+    }
+
+    /* ── CONTENT SLIDE ───────────────────────── */
+    .slide-content {
+      padding: clamp(18px, 3.5%, 40px) clamp(22px, 4%, 48px) clamp(28px, 4%, 48px);
+      gap: 0;
+    }
+    .slide-label {
+      font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 4px; font-weight: 600;
+    }
+    .slide-title {
+      font-size: clamp(18px, 2.5vw, 28px);
+      font-weight: 700; letter-spacing: -.02em;
+      margin-bottom: clamp(10px, 2%, 20px); line-height: 1.2;
+    }
+    .slide-body {
+      flex: 1; display: flex; flex-direction: column; justify-content: center;
+      gap: 10px;
+    }
+
+    /* ── CARDS ───────────────────────────────── */
+    .grid { display: grid; gap: 9px; }
+    .g2   { grid-template-columns: 1fr 1fr; }
+    .g3   { grid-template-columns: 1fr 1fr 1fr; }
+    .g4   { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: clamp(10px, 1.4%, 16px) clamp(12px, 1.6%, 18px);
+    }
+    .card-title {
+      font-size: clamp(10px, 1.15vw, 12.5px);
+      font-weight: 600; color: var(--accent);
+      margin-bottom: 5px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .card-title.purple { color: var(--accent2); }
+    .card-title.green  { color: var(--green); }
+    .card-body {
+      font-size: clamp(9.5px, 1vw, 11.5px);
+      color: var(--text2); line-height: 1.55;
+    }
+
+    /* ── BULLETS ─────────────────────────────── */
+    .bullets { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    .bullets li {
+      position: relative;
+      padding-left: 16px;
+      font-size: clamp(11px, 1.3vw, 14.5px); line-height: 1.55;
+    }
+    .bullets li::before {
+      content: '';
+      position: absolute; left: 0; top: 7px;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+    }
+    .bullets li strong { color: var(--text); }
+
+    /* ── NUMBERED ────────────────────────────── */
+    .numbered { list-style: none; display: flex; flex-direction: column; gap: 9px; counter-reset: item; }
+    .numbered li {
+      position: relative;
+      padding-left: 34px;
+      font-size: clamp(11px, 1.3vw, 14.5px); line-height: 1.55;
+      counter-increment: item;
+    }
+    .numbered li::before {
+      content: counter(item);
+      position: absolute; left: 0; top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 10px; font-weight: 700;
+    }
+    .numbered li strong { color: var(--text); }
+
+    /* ── TWO-COL ─────────────────────────────── */
+    .two-col {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px; flex: 1;
+    }
+    .col { display: flex; flex-direction: column; gap: 9px; }
+
+    /* ── MONOSPACE DIAGRAM ───────────────────── */
+    .diag {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: clamp(10px, 1.4%, 16px) clamp(12px, 1.6%, 18px);
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: clamp(8.5px, 0.92vw, 11px);
+      color: var(--text2); line-height: 1.75; white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .diag .a  { color: var(--accent);  font-weight: 600; }
+    .diag .a2 { color: var(--accent2); font-weight: 600; }
+    .diag .g  { color: var(--green);   font-weight: 600; }
+    .diag .y  { color: var(--yellow);  font-weight: 600; }
+    .diag .r  { color: var(--red);     font-weight: 600; }
+
+    /* ── STATS ───────────────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 12px 10px; text-align: center;
+    }
+    .stat-val {
+      font-size: clamp(20px, 2.6vw, 30px);
+      font-weight: 700; color: var(--accent);
+      letter-spacing: -.03em; line-height: 1; margin-bottom: 4px;
+    }
+    .stat-lbl { font-size: clamp(8.5px, 0.9vw, 10.5px); color: var(--text2); }
+
+    /* ── TAGS ────────────────────────────────── */
+    .tags { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 11px; border-radius: 20px;
+      font-size: clamp(9.5px, 1vw, 11px); font-weight: 500; border: 1px solid;
+    }
+    .tb  { background: rgba(79,142,247,.1);  color: var(--accent);  border-color: rgba(79,142,247,.28); }
+    .tp  { background: rgba(167,139,250,.1); color: var(--accent2); border-color: rgba(167,139,250,.28); }
+    .tg  { background: rgba(52,211,153,.1);  color: var(--green);   border-color: rgba(52,211,153,.28); }
+    .ty  { background: rgba(251,191,36,.1);  color: var(--yellow);  border-color: rgba(251,191,36,.28); }
+    .tr  { background: rgba(248,113,113,.1); color: var(--red);     border-color: rgba(248,113,113,.28); }
+
+    /* ── TABLE ───────────────────────────────── */
+    .tbl { width: 100%; border-collapse: collapse; font-size: clamp(9.5px,1vw,12px); }
+    .tbl th {
+      text-align: left; padding: 6px 10px;
+      background: var(--surface); color: var(--accent);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .tbl td { padding: 6px 10px; color: var(--text2); border-bottom: 1px solid rgba(79,142,247,.07); }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl .m { font-family: monospace; color: var(--accent); font-size: .88em; }
+
+    /* ── HELPERS ─────────────────────────────── */
+    .divider { height: 1px; background: var(--border); margin: 7px 0; }
+    .muted   { color: var(--text2); font-size: .87em; }
+    .accent  { color: var(--accent); }
+    .flex-center { display: flex; align-items: center; justify-content: center; }
+    .col-center  { display: flex; flex-direction: column; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<div id="deck">
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 1 — CAPA
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-cover active">
+    <div class="cover-content">
+      <div class="cover-tag">Sistemas Distribuídos e Programação Paralela · 2026</div>
+      <h1 class="cover-title">AVSYS</h1>
+      <p class="cover-subtitle">Sistema Distribuído de Reserva de Passagens Aéreas<br>com Prevenção de Double-Booking e Comunicação Assíncrona</p>
+      <p class="cover-authors">Felipe Farias &nbsp;·&nbsp; Breno Moura &nbsp;·&nbsp; Gabriel Aragão &nbsp;·&nbsp; Nicollas Matsuo</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 2 — SEÇÃO: INTRODUÇÃO
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-section">
+    <div class="section-bg-num">01</div>
+    <div class="section-content">
+      <p class="section-eyebrow">Seção 1</p>
+      <h2 class="section-heading">Introdução</h2>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 3 — CONTEXTUALIZAÇÃO
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Introdução</p>
+    <h2 class="slide-title">Contextualização</h2>
+    <div class="slide-body">
+      <div class="stats" style="margin-bottom: 12px;">
+        <div class="stat">
+          <div class="stat-val">~4B</div>
+          <div class="stat-lbl">passageiros aéreos em 2024</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">&lt; 1s</div>
+          <div class="stat-lbl">janela para reservar em promoções</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">10k+</div>
+          <div class="stat-lbl">usuários simultâneos em picos</div>
+        </div>
+      </div>
+      <ul class="bullets">
+        <li>Venda de passagens é um dos domínios mais exigentes para sistemas de informação — <strong>assentos limitados disputados em tempo real</strong></li>
+        <li>Lançamentos de promoções e alta temporada geram <strong>picos de demanda simultânea</strong> que testam os limites de consistência</li>
+        <li>A corretude do sistema não é opcional — garantir que <strong>dois usuários não reservem o mesmo assento</strong> é requisito crítico de negócio</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 4 — DEFINIÇÃO DO PROBLEMA
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Introdução</p>
+    <h2 class="slide-title">Definição do Problema</h2>
+    <div class="slide-body">
+      <div class="two-col">
+        <div class="col col-center">
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title">⚠ Double-Booking</div>
+            <div class="card-body">Dois usuários obtêm reservas válidas para o mesmo assento — anomalia crítica de corretude que impacta diretamente a experiência do passageiro</div>
+          </div>
+          <div class="card">
+            <div class="card-title">↔ Lost Update</div>
+            <div class="card-body">Sem coordenação, atualizações de múltiplos processos se sobrescrevem silenciosamente — a segunda escrita invalida a primeira</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔀 Race Condition</div>
+            <div class="card-body">Dois processos leem "available" → passam na validação → ambos escrevem com sucesso — resultado incorreto sem erro explícito</div>
+          </div>
+        </div>
+        <div class="col col-center">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;width:100%;">
+            <!-- header -->
+            <div style="display:grid;grid-template-columns:1fr 24px 1fr;gap:4px;margin-bottom:10px;text-align:center;">
+              <div style="font-size:clamp(10px,1.1vw,12px);font-weight:700;color:var(--accent);">Usuário A</div>
+              <div></div>
+              <div style="font-size:clamp(10px,1.1vw,12px);font-weight:700;color:var(--accent2);">Usuário B</div>
+            </div>
+            <!-- step 1: both read available -->
+            <div style="display:grid;grid-template-columns:1fr 24px 1fr;gap:4px;margin-bottom:6px;">
+              <div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:6px;padding:5px 8px;font-size:clamp(9px,1vw,11px);font-family:monospace;color:var(--green);text-align:center;">READ S22 → available</div>
+              <div style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text2);">║</div>
+              <div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:6px;padding:5px 8px;font-size:clamp(9px,1vw,11px);font-family:monospace;color:var(--green);text-align:center;">READ S22 → available</div>
+            </div>
+            <!-- step 2: both insert -->
+            <div style="display:grid;grid-template-columns:1fr 24px 1fr;gap:4px;margin-bottom:10px;">
+              <div style="background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.35);border-radius:6px;padding:5px 8px;font-size:clamp(9px,1vw,11px);font-family:monospace;color:var(--accent);text-align:center;">INSERT reserva ✓</div>
+              <div style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text2);">║</div>
+              <div style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.35);border-radius:6px;padding:5px 8px;font-size:clamp(9px,1vw,11px);font-family:monospace;color:var(--accent2);text-align:center;">INSERT reserva ✓</div>
+            </div>
+            <!-- result -->
+            <div style="text-align:center;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);border-radius:6px;padding:7px;font-size:clamp(10px,1.1vw,12px);font-weight:700;color:var(--red);">
+              ⚠ DOUBLE-BOOKING
+            </div>
+            <p style="text-align:center;margin-top:7px;font-size:clamp(8.5px,0.9vw,10.5px);color:var(--text2);">sem coordenação → ambos passam na validação</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 5 — MOTIVAÇÃO
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Introdução</p>
+    <h2 class="slide-title">Motivação</h2>
+    <div class="slide-body">
+      <div class="two-col">
+        <div class="col col-center">
+          <p style="font-size: clamp(11px,1.25vw,13.5px); color: var(--text2); line-height: 1.55; margin-bottom: 6px;">
+            Sistemas monolíticos resolvem o problema com transações globais e locks pessimistas.
+            <span class="accent">Microsserviços impõem novos desafios:</span>
+          </p>
+          <ul class="bullets">
+            <li><strong>Bancos de dados independentes</strong> por serviço — não existe transação distribuída global</li>
+            <li><strong>Múltiplas réplicas</strong> do mesmo serviço processam requisições sem coordenação implícita</li>
+            <li><strong>Teorema CAP</strong> (Brewer) — num sistema distribuído não é possível garantir ao mesmo tempo consistência, disponibilidade e tolerância a partições de rede</li>
+          </ul>
+        </div>
+        <div class="col col-center" style="gap: 10px;">
+          <div class="card" style="padding: 14px 12px;">
+            <p style="font-size: clamp(11px,1.2vw,13px); font-weight: 600; margin-bottom: 10px; text-align:center;">Teorema CAP <span style="font-weight:400;color:var(--text2);font-size:.85em;">(Brewer, 2000)</span></p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;text-align:center;">
+              <div style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);border-radius:6px;padding:6px 4px;">
+                <div style="font-size:clamp(13px,1.5vw,17px);font-weight:800;color:var(--accent);">C</div>
+                <div style="font-size:clamp(8px,0.85vw,9.5px);color:var(--text2);">Consistência</div>
+              </div>
+              <div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:6px;padding:6px 4px;">
+                <div style="font-size:clamp(13px,1.5vw,17px);font-weight:800;color:var(--accent2);">A</div>
+                <div style="font-size:clamp(8px,0.85vw,9.5px);color:var(--text2);">Disponibilidade</div>
+              </div>
+              <div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:6px;padding:6px 4px;">
+                <div style="font-size:clamp(13px,1.5vw,17px);font-weight:800;color:var(--green);">P</div>
+                <div style="font-size:clamp(8px,0.85vw,9.5px);color:var(--text2);">Tolerância a partições</div>
+              </div>
+            </div>
+            <p style="font-size: clamp(9px,0.95vw,10.5px); color: var(--text2); margin-top:8px; text-align:center;">Num sistema distribuído só é possível garantir dois dos três</p>
+          </div>
+          <div class="card">
+            <div class="card-title">💡 Nossa decisão de projeto</div>
+            <div class="card-body">Garantimos <strong style="color:var(--text)">consistência + tolerância a partições</strong>, abrindo mão de disponibilidade total — em falha de rede, o sistema rejeita a reserva (409) em vez de arriscar confirmar o mesmo assento duas vezes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 6 — OBJETIVOS
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Introdução</p>
+    <h2 class="slide-title">Objetivos do Projeto</h2>
+    <div class="slide-body">
+      <ol class="numbered">
+        <li><strong>Arquitetura de microsserviços</strong> com fronteiras de dados claras, cada serviço proprietário exclusivo do seu banco e comunicação assíncrona via eventos</li>
+        <li><strong>Prevenção de double-booking</strong> via lock distribuído Redis + versionamento otimista SQLite — defesa em duas camadas independentes</li>
+        <li><strong>Comunicação assíncrona com RabbitMQ</strong> para desacoplar o processamento de pagamentos do fluxo de reserva, reduzindo latência percebida</li>
+        <li><strong>Containerização completa com Docker Compose</strong> — health checks, orquestração de dependências e volumes persistentes</li>
+      </ol>
+      <div class="divider"></div>
+      <div class="tags">
+        <span class="tag tb">3 Microsserviços</span>
+        <span class="tag tp">Redis Lock</span>
+        <span class="tag tg">RabbitMQ</span>
+        <span class="tag ty">Docker Compose</span>
+        <span class="tag tb">SQLite WAL</span>
+        <span class="tag tp">Bun · ElysiaJS · TypeScript</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 7 — RELEVÂNCIA
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Introdução</p>
+    <h2 class="slide-title">Relevância da Solução</h2>
+    <div class="slide-body">
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-title">🏭 Padrões de Produção</div>
+          <div class="card-body">Redis distributed lock e optimistic locking são usados em escala por Amazon, Booking.com e Airbnb — a solução replica práticas estabelecidas da indústria</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🛡 Defense in Depth</div>
+          <div class="card-body">Duas barreiras independentes: mutex Redis elimina contenção antes de acessar o banco; versionamento SQLite captura casos extremos como expiração de TTL</div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Latência &lt; 120 ms</div>
+          <div class="card-body">Pipeline completo de reserva (lock + transação + evento) em ~120 ms — o pagamento é assíncrono e não bloqueia a resposta ao cliente</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📐 Generalização</div>
+          <div class="card-body">Os padrões aplicados são válidos para qualquer sistema de reserva com alta concorrência — hotéis, shows, consultas médicas, vagas de estacionamento</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 8 — SEÇÃO: METODOLOGIA
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-section">
+    <div class="section-bg-num">02</div>
+    <div class="section-content">
+      <p class="section-eyebrow">Seção 2</p>
+      <h2 class="section-heading">Metodologia</h2>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 9 — ARQUITETURA DO SISTEMA
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Metodologia</p>
+    <h2 class="slide-title">Arquitetura do Sistema</h2>
+    <div class="slide-body">
+      <div class="two-col">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;">
+          <!-- Browser -->
+          <div style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);border-radius:8px;padding:5px 28px;font-size:clamp(10px,1.1vw,13px);font-weight:700;color:var(--yellow);">Browser</div>
+          <div style="font-size:10px;color:var(--text2);">↓ HTTP :80</div>
+          <!-- NGINX -->
+          <div style="background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.4);border-radius:8px;padding:7px 0;width:100%;text-align:center;font-size:clamp(10px,1.1vw,12px);font-weight:700;color:var(--accent);">NGINX :80 &nbsp;·&nbsp; API Gateway &nbsp;·&nbsp; Rate Limiting</div>
+          <!-- 3 arrows -->
+          <div style="display:flex;width:90%;justify-content:space-around;font-size:10px;color:var(--text2);">
+            <span>↓</span><span>↓</span><span>↓</span>
+          </div>
+          <!-- 3 services -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;width:100%;">
+            <div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.35);border-radius:8px;padding:7px 4px;text-align:center;">
+              <div style="font-size:clamp(9px,1vw,11px);font-weight:700;color:var(--accent2);">flight-catalog</div>
+              <div style="font-size:clamp(8px,0.85vw,10px);color:var(--text2);margin-top:2px;">:3001</div>
+            </div>
+            <div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.6);border-radius:8px;padding:7px 4px;text-align:center;">
+              <div style="font-size:clamp(9px,1vw,11px);font-weight:700;color:var(--accent2);">reservation-service</div>
+              <div style="font-size:clamp(8px,0.85vw,10px);color:var(--text2);margin-top:2px;">:3002</div>
+            </div>
+            <div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.35);border-radius:8px;padding:7px 4px;text-align:center;">
+              <div style="font-size:clamp(9px,1vw,11px);font-weight:700;color:var(--accent2);">payment-service</div>
+              <div style="font-size:clamp(8px,0.85vw,10px);color:var(--text2);margin-top:2px;">:3003</div>
+            </div>
+          </div>
+          <!-- arrows to infra -->
+          <div style="font-size:11px;color:var(--text2);">↕</div>
+          <!-- Infra -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;">
+            <div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35);border-radius:8px;padding:7px 6px;text-align:center;">
+              <div style="font-size:clamp(10px,1.1vw,12px);font-weight:700;color:var(--green);">Redis :6379</div>
+              <div style="font-size:clamp(8px,0.85vw,10px);color:var(--text2);margin-top:2px;">lock distribuído · cache</div>
+            </div>
+            <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:7px 6px;text-align:center;">
+              <div style="font-size:clamp(10px,1.1vw,12px);font-weight:700;color:var(--yellow);">RabbitMQ :5672</div>
+              <div style="font-size:clamp(8px,0.85vw,10px);color:var(--text2);margin-top:2px;">airline.events</div>
+            </div>
+          </div>
+        </div>
+        <div class="col col-center">
+          <ul class="bullets">
+            <li><strong>Padrão Microsserviços</strong> — cada serviço encapsula um subdomínio de negócio, tem banco próprio e é independentemente implantável</li>
+            <li><strong>NGINX como API Gateway</strong> — roteamento por prefixo, rate limiting (20 req/s/IP), balanceamento least_conn</li>
+            <li><strong>Duas redes Docker isoladas</strong> — airline-public (NGINX ↔ serviços) e airline-internal (serviços ↔ Redis/RabbitMQ)</li>
+            <li><strong>REST síncrono + AMQP assíncrono</strong> — síncrono onde o cliente aguarda, assíncrono para efeitos colaterais entre serviços</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 10 — TECNOLOGIAS UTILIZADAS
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Metodologia</p>
+    <h2 class="slide-title">Tecnologias Utilizadas</h2>
+    <div class="slide-body">
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-title">⚡ Bun + ElysiaJS</div>
+          <div class="card-body">Runtime JS/TS nativo — executa TypeScript sem transpilação. 2,5–3× mais rápido que Node.js (TechEmpower 2024). ElysiaJS: validação TypeBox end-to-end com tipos gerados automaticamente.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🗄 SQLite (bun:sqlite)</div>
+          <div class="card-body">Driver nativo embutido, zero dependências. WAL mode: leituras concorrentes durante escritas. PRAGMA foreign_keys e busy_timeout. Versionamento otimista com coluna version.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔴 Redis (ioredis)</div>
+          <div class="card-body"><strong style="color:var(--text)">Lock distribuído:</strong> SET NX EX — atômico em single-thread. <strong style="color:var(--text)">Cache:</strong> buscas TTL 5 min. <strong style="color:var(--text)">Idempotência:</strong> pagamentos TTL 24 h. Release via script Lua.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🐰 RabbitMQ (amqplib)</div>
+          <div class="card-body">Topic exchange <span class="accent">airline.events</span>. Filas duráveis, prefetch=1, Dead Letter Exchange para mensagens com falha. Routing key no formato <span class="accent">{agregado}.{evento}</span>.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 11 — MICROSSERVIÇOS
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Metodologia</p>
+    <h2 class="slide-title">Organização dos Microsserviços</h2>
+    <div class="slide-body">
+      <div class="grid g3" style="flex: 1;">
+        <div class="card">
+          <div class="card-title">✈ flight-catalog</div>
+          <div class="card-body">
+            <span class="tag tb" style="margin-bottom:7px;display:inline-flex;">:3001</span>
+            <p>Inventário de voos, assentos, preços e horários.</p>
+            <div class="divider"></div>
+            <p><span class="accent">Cache Redis</span> 5 min por parâmetro de busca</p>
+            <div class="divider"></div>
+            <p>Consome: <em>reservation.confirmed, reservation.cancelled</em></p>
+            <div class="divider"></div>
+            <p>DB: airlines, airports, flights, seats</p>
+          </div>
+        </div>
+        <div class="card" style="border-color: rgba(167,139,250,0.4);">
+          <div class="card-title purple">🔒 reservation-service</div>
+          <div class="card-body">
+            <span class="tag tp" style="margin-bottom:7px;display:inline-flex;">:3002</span>
+            <p>Orquestra o fluxo crítico de reserva com lock e transação atômica.</p>
+            <div class="divider"></div>
+            <p><span style="color:var(--accent2)">Redis lock</span> + SQLite versionamento otimista</p>
+            <div class="divider"></div>
+            <p>Publica: <em>payment.requested, reservation.confirmed/cancelled</em></p>
+            <div class="divider"></div>
+            <p>DB: reservations, seats (cópia local), events</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title green">💳 payment-service</div>
+          <div class="card-body">
+            <span class="tag tg" style="margin-bottom:7px;display:inline-flex;">:3003</span>
+            <p>Consumidor assíncrono — processa pagamentos sem bloquear a reserva.</p>
+            <div class="divider"></div>
+            <p><span class="accent">Idempotência</span> via Redis (TTL 24 h) — sem duplicatas em re-entrega</p>
+            <div class="divider"></div>
+            <p>Taxa de sucesso: 90% (simulado)</p>
+            <div class="divider"></div>
+            <p>DB: payment_orders, notifications</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 12 — CONTÊINERES + BANCO DE DADOS
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Metodologia</p>
+    <h2 class="slide-title">Estrutura dos Contêineres e Banco de Dados</h2>
+    <div class="slide-body">
+      <div class="two-col">
+        <div class="col">
+          <p style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:5px;">6 Contêineres Docker Compose</p>
+          <div class="tags" style="margin-bottom:10px;">
+            <span class="tag tb">nginx</span>
+            <span class="tag tp">flight-catalog</span>
+            <span class="tag tp">reservation-service</span>
+            <span class="tag tp">payment-service</span>
+            <span class="tag tr">redis</span>
+            <span class="tag ty">rabbitmq</span>
+          </div>
+          <ul class="bullets">
+            <li><strong>depends_on + service_healthy</strong> — NGINX só sobe após todos os serviços passarem no health check</li>
+            <li><strong>Volumes nomeados</strong> para persistência dos três bancos SQLite entre reinicializações</li>
+            <li><strong>2 redes isoladas</strong> — Redis e RabbitMQ invisíveis ao gateway</li>
+          </ul>
+        </div>
+        <div class="col col-center">
+          <div class="diag">
+<span class="a">flight-catalog</span>     → flights.db
+<span class="a2">reservation-service</span>  → reservations.db
+<span class="g">payment-service</span>     → payments.db
+
+<span class="y">Configurações SQLite</span> (todos os serviços):
+  journal_mode = WAL    ← leituras concorrentes
+  foreign_keys = ON     ← integridade referencial
+  busy_timeout = 5000   ← retry automático em lock
+
+<span class="y">Controle de concorrência</span>:
+  coluna <span class="a">version</span> + UPDATE … WHERE version = ?
+  → changes = 0  ⟹  ROLLBACK (anomalia detectada)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 13 — FLUXO DE COMUNICAÇÃO
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Metodologia</p>
+    <h2 class="slide-title">Fluxo de Comunicação</h2>
+    <div class="slide-body">
+
+      <!-- helper style local -->
+      <style>
+        .fstep { display:flex; flex-direction:column; align-items:center; flex:1; gap:5px; }
+        .fbox  { width:100%; border-radius:7px; padding:6px 7px; text-align:center; }
+        .ftit  { font-size:clamp(8px,0.88vw,10px); font-weight:700; }
+        .fsub  { font-size:clamp(6.5px,0.72vw,8.5px); color:var(--text2); margin-top:2px; font-family:monospace; }
+        .fcap  { font-size:clamp(6.5px,0.72vw,8px); color:var(--text2); text-align:center; line-height:1.4; font-style:italic; }
+        .farr  { display:flex; align-items:flex-start; padding-top:14px; font-size:11px; flex-shrink:0; }
+      </style>
+
+      <!-- faixa síncrona -->
+      <div style="margin-bottom:6px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;">Síncrono — cliente aguarda resposta</div>
+        <div style="display:flex;align-items:flex-start;gap:2px;flex-wrap:nowrap;">
+
+          <div class="fstep">
+            <div class="fbox" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);">
+              <div class="ftit" style="color:var(--yellow);">① Cliente</div>
+              <div class="fsub">POST /api/reservations<br>{flight_id, seat_id}</div>
+            </div>
+            <div class="fcap">usuário clica em<br>"reservar assento"</div>
+          </div>
+          <div class="farr" style="color:var(--accent);">→</div>
+
+          <div class="fstep">
+            <div class="fbox" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.35);">
+              <div class="ftit" style="color:var(--accent);">② NGINX</div>
+              <div class="fsub">roteia para<br>reservation-service</div>
+            </div>
+            <div class="fcap">gateway recebe e<br>aplica rate limiting</div>
+          </div>
+          <div class="farr" style="color:var(--accent);">→</div>
+
+          <div class="fstep">
+            <div class="fbox" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.4);">
+              <div class="ftit" style="color:var(--red);">③ Redis Lock</div>
+              <div class="fsub">SET lock:seat NX EX 30<br>→ OK ou <span style="color:var(--red);">409</span></div>
+            </div>
+            <div class="fcap">garante que só um<br>processo reserve este assento</div>
+          </div>
+          <div class="farr" style="color:var(--accent);">→</div>
+
+          <div class="fstep">
+            <div class="fbox" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.4);">
+              <div class="ftit" style="color:var(--accent);">④ SQLite Tx</div>
+              <div class="fsub">SELECT version → INSERT<br>UPDATE WHERE version=N</div>
+            </div>
+            <div class="fcap">segunda barreira:<br>versionamento otimista</div>
+          </div>
+          <div class="farr" style="color:var(--accent);">→</div>
+
+          <div class="fstep">
+            <div class="fbox" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);">
+              <div class="ftit" style="color:var(--yellow);">⑤ RabbitMQ</div>
+              <div class="fsub">publish payment.requested<br>DEL lock (Lua atômica)</div>
+            </div>
+            <div class="fcap">dispara pagamento e<br>libera o lock imediatamente</div>
+          </div>
+          <div class="farr" style="color:var(--accent);">→</div>
+
+          <div class="fstep">
+            <div class="fbox" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.45);">
+              <div class="ftit" style="color:var(--green);">⑥ 202 Accepted</div>
+              <div class="fsub">{reservation_id<br>status: "pending"}</div>
+            </div>
+            <div class="fcap">cliente recebe confirmação<br>sem esperar o pagamento</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- separador -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);">Assíncrono — em background</div>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <!-- faixa assíncrona -->
+      <div style="display:flex;align-items:flex-start;gap:2px;flex-wrap:nowrap;">
+
+        <div class="fstep">
+          <div class="fbox" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);">
+            <div class="ftit" style="color:var(--green);">⑦ payment-service</div>
+            <div class="fsub">consome payment.requested<br>verifica idempotência Redis</div>
+          </div>
+          <div class="fcap">evita processar o mesmo<br>pagamento duas vezes</div>
+        </div>
+        <div class="farr" style="color:var(--accent2);">→</div>
+
+        <div class="fstep">
+          <div class="fbox" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);">
+            <div class="ftit" style="color:var(--yellow);">⑧ RabbitMQ</div>
+            <div class="fsub"><span style="color:var(--green);">payment.succeeded</span><br>ou <span style="color:var(--red);">payment.failed</span></div>
+          </div>
+          <div class="fcap">resultado do pagamento<br>notificado via evento</div>
+        </div>
+        <div class="farr" style="color:var(--accent2);">→</div>
+
+        <div class="fstep">
+          <div class="fbox" style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);">
+            <div class="ftit" style="color:var(--accent2);">⑨ reservation-service</div>
+            <div class="fsub">status → confirmed<br>ou cancelled + evento</div>
+          </div>
+          <div class="fcap">atualiza a reserva e<br>publica para o catálogo</div>
+        </div>
+        <div class="farr" style="color:var(--accent2);">→</div>
+
+        <div class="fstep">
+          <div class="fbox" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);">
+            <div class="ftit" style="color:var(--accent);">⑩ flight-catalog</div>
+            <div class="fsub">reservation.confirmed<br>→ seat status = sold</div>
+          </div>
+          <div class="fcap">assento marcado como<br>vendido no catálogo</div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 14 — FERRAMENTAS + TESTES
+  ══════════════════════════════════════════════════ -->
+  <section class="slide slide-content">
+    <p class="slide-label">Metodologia</p>
+    <h2 class="slide-title">Ferramentas e Estratégia de Testes</h2>
+    <div class="slide-body">
+      <div class="two-col">
+        <div class="col">
+          <p style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px;">Stack completo</p>
+          <table class="tbl">
+            <tr><th>Camada</th><th>Ferramenta</th></tr>
+            <tr><td>Runtime</td><td class="m">Bun + TypeScript</td></tr>
+            <tr><td>Framework API</td><td class="m">ElysiaJS + TypeBox</td></tr>
+            <tr><td>Banco de dados</td><td class="m">SQLite (bun:sqlite)</td></tr>
+            <tr><td>Cache / Lock</td><td class="m">Redis + ioredis</td></tr>
+            <tr><td>Mensageria</td><td class="m">RabbitMQ + amqplib</td></tr>
+            <tr><td>API Gateway</td><td class="m">NGINX</td></tr>
+            <tr><td>Orquestração</td><td class="m">Docker Compose</td></tr>
+          </table>
+        </div>
+        <div class="col">
+          <p style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px;">Estratégia de testes</p>
+          <ul class="bullets">
+            <li><strong>Teste funcional</strong> via frontend — fluxo completo: busca → seleção de assento → reserva → consulta de status</li>
+            <li><strong>Teste de concorrência</strong> — múltiplas requisições simultâneas ao mesmo assento, validando zero double-bookings sob carga</li>
+            <li><strong>Painel de arquitetura em tempo real</strong> — visualização de lock.acquired, lock.failed, db.transaction e rabbitmq.published via polling de eventos</li>
+            <li><strong>Resultado</strong>: <span style="color:var(--green);font-weight:600;">0 double-bookings</span> confirmado sob carga concorrente simulada</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<div id="nav">
+  <button id="prev" title="Anterior (← ou ↑)">&#8592;</button>
+  <span id="counter">1 / 14</span>
+  <button id="next" title="Próximo (→ ou ↓ ou Espaço)">&#8594;</button>
+</div>
+<div id="hint">← → navegar &nbsp;·&nbsp; F fullscreen</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const bar     = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const total   = slides.length;
+  let cur = 0;
+
+  function goTo(n) {
+    if (n === cur) return;
+    const next = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('leaving');
+    setTimeout(() => slides[cur].classList.remove('leaving'), 320);
+    cur = next;
+    slides[cur].classList.add('active');
+    bar.style.width = ((cur + 1) / total * 100) + '%';
+    counter.textContent = (cur + 1) + ' / ' + total;
+  }
+
+  document.getElementById('prev').addEventListener('click', () => goTo(cur - 1));
+  document.getElementById('next').addEventListener('click', () => goTo(cur + 1));
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); goTo(cur + 1); }
+    if (['ArrowLeft','ArrowUp'].includes(e.key))        { e.preventDefault(); goTo(cur - 1); }
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // init progress bar
+  bar.style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>
