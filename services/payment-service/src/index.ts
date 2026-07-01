@@ -19,7 +19,7 @@ async function main() {
       service: 'payment-service',
       port:    PORT,
     }))
-    .listen(PORT)
+    .listen({ port: PORT, hostname: '0.0.0.0' })
 
   console.log(`[payment-service] http://localhost:${app.server?.port}`)
 }

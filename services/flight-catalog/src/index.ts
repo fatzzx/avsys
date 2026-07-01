@@ -21,7 +21,7 @@ async function main() {
       service: 'flight-catalog',
       port:    PORT,
     }))
-    .listen(PORT)
+    .listen({ port: PORT, hostname: '0.0.0.0' })
 
   console.log(`[flight-catalog] http://localhost:${app.server?.port}`)
 }
