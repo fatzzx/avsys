@@ -112,6 +112,27 @@ export abstract class ReservationService {
     ).all(userId)
   }
 
+  static getSummary() {
+    const reservations = db.query(
+      `SELECT status, COUNT(*) as count FROM reservations GROUP BY status`
+    ).all() as Array<{ status: string; count: number }>
+
+    const seats = db.query(
+      `SELECT status, COUNT(*) as count FROM seats GROUP BY status`
+    ).all() as Array<{ status: string; count: number }>
+
+    return {
+      reservations: reservations.reduce((acc, item) => {
+        acc[item.status] = item.count
+        return acc
+      }, {} as Record<string, number>),
+      seats: seats.reduce((acc, item) => {
+        acc[item.status] = item.count
+        return acc
+      }, {} as Record<string, number>),
+    }
+  }
+
   static async cancel(reservationId: string) {
     const reservation = db.query(
       `SELECT * FROM reservations WHERE id = ?`

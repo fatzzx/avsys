@@ -239,6 +239,108 @@
     }
     .field input.user-id { width: 220px; }
 
+    .demo-box {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border: 1px solid rgba(240,160,48,.25);
+      background: rgba(240,160,48,.07);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .demo-box strong { color: var(--white); font-size: 12px; letter-spacing: 1px; }
+    .demo-box small { color: var(--text-dim); font-size: 11px; line-height: 1.5; }
+    .demo-evidence {
+      border-top: 1px solid rgba(240,160,48,.2);
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .demo-metrics {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .demo-metric {
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.2);
+      padding: 8px 10px;
+      min-width: 120px;
+    }
+    .demo-metric strong { color: var(--white); display: block; font-size: 13px; }
+    .demo-metric span { color: var(--text-dim); font-size: 10px; letter-spacing: 1px; }
+    .demo-events {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow: auto;
+    }
+    .demo-event {
+      border-left: 2px solid var(--border);
+      padding: 6px 8px;
+      background: rgba(255,255,255,.03);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .demo-event strong { color: var(--white); display: block; margin-bottom: 2px; }
+    .demo-trace-item {
+      border: 1px solid rgba(240,160,48,.16);
+      background: rgba(0,0,0,.18);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demo-trace-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .demo-trace-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .demo-trace-badge.ok { border-color: rgba(61,220,132,.35); color: var(--green); }
+    .demo-trace-badge.fail { border-color: rgba(240,80,80,.35); color: var(--red); }
+    .demo-trace-code {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--white);
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: rgba(255,255,255,.04);
+      padding: 6px;
+      border-left: 2px solid rgba(240,160,48,.25);
+    }
+    .demo-trace-meta { font-size: 10px; color: var(--text-dim); }
+    .demo-trace-result {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .demo-trace-result.ok { color: var(--green); }
+    .demo-trace-result.fail { color: var(--red); }
+    .demo-button {
+      border-color: var(--amber);
+      color: var(--amber);
+      font-weight: 600;
+      background: linear-gradient(90deg, rgba(240,160,48,.15), rgba(240,160,48,.06));
+      box-shadow: inset 0 0 0 1px rgba(240,160,48,.2);
+    }
+    .demo-button:hover {
+      background: var(--amber);
+      color: var(--bg);
+      box-shadow: 0 0 16px rgba(240,160,48,.2);
+    }
+
     /* ── Status ── */
     .status-panel {
       padding: 16px;
@@ -255,6 +357,22 @@
     .status-detail { display: flex; flex-direction: column; gap: 3px; }
     .status-detail strong { color: var(--white); }
     .status-detail small   { color: var(--text-dim); font-size: 11px; letter-spacing: 1px; }
+    .demo-live {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px 0 0;
+    }
+    .demo-card {
+      border: 1px solid var(--border);
+      padding: 10px;
+      background: rgba(255,255,255,.03);
+      min-height: 88px;
+    }
+    .demo-card strong { color: var(--white); display: block; margin-bottom: 4px; }
+    .demo-card span { color: var(--text-dim); font-size: 11px; }
+    .demo-card.winner { border-color: rgba(61,220,132,.35); background: rgba(61,220,132,.08); }
+    .demo-card.loser { border-color: rgba(240,80,80,.35); background: rgba(240,80,80,.08); }
 
     /* ── Misc ── */
     .empty { padding: 24px; text-align: center; color: var(--text-dim); letter-spacing: 2px; font-size: 12px; }
@@ -358,6 +476,21 @@
           <input id="user-id" class="user-id" type="text" placeholder="usuario-1" value="usuario-1">
         </div>
         <button class="primary" onclick="createReservation()">CONFIRMAR RESERVA ▸</button>
+        <button class="demo-button" onclick="simulateTwoUsers()">DEMO 2 USUÁRIOS ▸</button>
+      </div>
+      <div class="demo-box">
+        <strong>SIMULAÇÃO DE CONCORRÊNCIA</strong>
+        <small>Dois passageiros tentam comprar o mesmo assento ao mesmo tempo. O sistema usa lock distribuído para garantir que apenas um consiga concluir a compra.</small>
+        <div class="demo-evidence" id="demo-evidence">
+          <div class="demo-metrics">
+            <div class="demo-metric"><strong id="demo-available-count">—</strong><span>ASSENTOS DISP. NO VOO</span></div>
+            <div class="demo-metric"><strong id="demo-seat-status">—</strong><span>STATUS DO ASSENTO</span></div>
+            <div class="demo-metric"><strong id="demo-seat-id">—</strong><span>ASSENTO SELECIONADO</span></div>
+          </div>
+          <div class="demo-events" id="demo-events">
+            <div class="demo-event"><strong>AGUARDANDO</strong><span>Selecione um voo e um assento para ver o estado real da disputa.</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -607,6 +740,246 @@
     }
   }
 
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\"/g, '&quot;')
+  }
+
+  async function loadDemoEvidence() {
+    const panel = document.getElementById('demo-events')
+    if (!panel) return
+
+    const availableCountEl = document.getElementById('demo-available-count')
+    const seatStatusEl = document.getElementById('demo-seat-status')
+    const seatIdEl = document.getElementById('demo-seat-id')
+
+    if (!selectedFlight) {
+      if (availableCountEl) availableCountEl.textContent = '—'
+      if (seatStatusEl) seatStatusEl.textContent = '—'
+      if (seatIdEl) seatIdEl.textContent = '—'
+      panel.innerHTML = '<div class="demo-event"><strong>AGUARDANDO</strong><span>Selecione um voo e um assento para ver o estado real da disputa.</span></div>'
+      return
+    }
+
+    try {
+      const [seatsRes, eventsRes] = await Promise.all([
+        fetch(`/api/flights/${selectedFlight.id}/seats`),
+        fetch('/api/events?limit=8'),
+      ])
+
+      const seats = seatsRes.ok ? await seatsRes.json() : []
+      const events = eventsRes.ok ? await eventsRes.json() : []
+      const available = Array.isArray(seats) ? seats.filter(s => s.status === 'available').length : 0
+      const occupied = Array.isArray(seats) ? seats.filter(s => s.status === 'reserved' || s.status === 'sold').length : 0
+      const selected = Array.isArray(seats) && selectedSeat ? seats.find(s => s.id === selectedSeat.id) : null
+      const status = selected ? selected.status.toUpperCase() : '—'
+      const seatLabel = selected ? selected.seat_number : (selectedSeat?.seat_number || '—')
+      const eventItems = Array.isArray(events) ? events : []
+
+      if (availableCountEl) availableCountEl.textContent = String(available)
+      if (seatStatusEl) seatStatusEl.textContent = status
+      if (seatIdEl) seatIdEl.textContent = seatLabel
+
+      panel.innerHTML = `
+        <div class="demo-event"><strong>ESTADO DO VOO</strong><span>${available} assentos disponíveis · ${occupied} ocupados neste voo.</span></div>
+        ${eventItems.length ? eventItems.slice(0, 6).map(event => `
+          <div class="demo-event">
+            <strong>${escapeHtml(event.type)}</strong>
+            <span>${escapeHtml(event.label || '—')} · ${escapeHtml(fmtEventTime(event.created_at))}</span>
+          </div>
+        `).join('') : '<div class="demo-event"><strong>SEM EVENTOS</strong><span>Ainda não há registros recentes de disputa.</span></div>'}
+      `
+    } catch (e) {
+      if (availableCountEl) availableCountEl.textContent = '—'
+      if (seatStatusEl) seatStatusEl.textContent = 'ERRO'
+      if (seatIdEl) seatIdEl.textContent = '—'
+      panel.innerHTML = `<div class="demo-event"><strong>ERRO</strong><span>${escapeHtml(e.message)}</span></div>`
+    }
+  }
+
+  function fmtEventTime(iso) {
+    if (!iso) return '—'
+    return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC' })
+  }
+
+  async function simulateTwoUsers() {
+    if (!selectedFlight || !selectedSeat) return
+
+    show('status-panel')
+    setStatus('pending', 'DEMONSTRAÇÃO...', '🔐 Lock Redis ativo · dois compradores disputando o mesmo assento...')
+    loadDemoEvidence()
+
+    const userA = 'usuario-demo-A'
+    const userB = 'usuario-demo-B'
+
+    const payloadA = {
+      user_id: userA,
+      flight_id: selectedFlight.id,
+      seat_id: selectedSeat.id,
+      total_price: selectedFlight.base_price,
+    }
+    const payloadB = {
+      user_id: userB,
+      flight_id: selectedFlight.id,
+      seat_id: selectedSeat.id,
+      total_price: selectedFlight.base_price,
+    }
+
+    const buildCurl = (payload, userId) => `curl -X POST http://localhost/api/reservations/ -H 'Content-Type: application/json' -d '${JSON.stringify(payload)}'`
+
+    const traceItems = [
+      {
+        user: userA,
+        label: 'USUÁRIO 1',
+        curl: buildCurl(payloadA, userA),
+        payload: payloadA,
+        status: 'ENVIANDO',
+        result: 'aguardando resposta...',
+      },
+      {
+        user: userB,
+        label: 'USUÁRIO 2',
+        curl: buildCurl(payloadB, userB),
+        payload: payloadB,
+        status: 'ENVIANDO',
+        result: 'aguardando resposta...',
+      },
+    ]
+
+    const renderTrace = () => {
+      const container = document.getElementById('demo-events')
+      if (!container) return
+      container.innerHTML = traceItems.map(item => `
+        <div class="demo-trace-item">
+          <div class="demo-trace-head">
+            <strong>${escapeHtml(item.label)}</strong>
+            <span class="demo-trace-badge ${item.status === 'OK' ? 'ok' : item.status === 'CONFLITO' ? 'fail' : ''}">${escapeHtml(item.status)}</span>
+          </div>
+          <div class="demo-trace-code">${escapeHtml(item.curl)}</div>
+          <div class="demo-trace-meta">payload: ${escapeHtml(JSON.stringify(item.payload))}</div>
+          <div class="demo-trace-result ${item.status === 'OK' ? 'ok' : item.status === 'CONFLITO' ? 'fail' : ''}">${escapeHtml(item.result)}</div>
+        </div>
+      `).join('')
+    }
+    renderTrace()
+
+    document.getElementById('status-content').innerHTML = `
+      <div class="status-panel pending fade">
+        <span class="status-icon">⏳</span>
+        <div class="status-detail">
+          <strong>SIMULANDO CONCORRÊNCIA</strong>
+          <small>Enviando duas requisições reais ao backend para o mesmo assento...</small>
+          <div class="demo-live">
+            <div class="demo-card">
+              <strong>${userA}</strong>
+              <span>tentando reservar...</span>
+            </div>
+            <div class="demo-card">
+              <strong>${userB}</strong>
+              <span>tentando reservar...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+
+    try {
+      const [resA, resB] = await Promise.all([
+        (async () => {
+          const response = await fetch('/api/reservations/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadA),
+          })
+          const data = await response.json().catch(() => null)
+          traceItems[0].status = response.ok ? 'OK' : response.status === 409 ? 'CONFLITO' : 'ERRO'
+          traceItems[0].result = `${response.status} · ${response.ok ? (data?.reservation_id ? `reserva ${data.reservation_id.slice(0,8)}` : 'reserva criada') : (data?.message || data?.error || 'falha')}`
+          renderTrace()
+          return { response, data }
+        })(),
+        (async () => {
+          const response = await fetch('/api/reservations/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadB),
+          })
+          const data = await response.json().catch(() => null)
+          traceItems[1].status = response.ok ? 'OK' : response.status === 409 ? 'CONFLITO' : 'ERRO'
+          traceItems[1].result = `${response.status} · ${response.ok ? (data?.reservation_id ? `reserva ${data.reservation_id.slice(0,8)}` : 'reserva criada') : (data?.message || data?.error || 'falha')}`
+          renderTrace()
+          return { response, data }
+        })(),
+      ])
+
+      const dataA = resA.data
+      const dataB = resB.data
+
+      if (resA.response.ok && resB.response.status === 409) {
+        const seatEl = document.getElementById('seat-' + selectedSeat.id)
+        if (seatEl) { seatEl.classList.remove('selected','available'); seatEl.classList.add('reserved') }
+        setTimeout(loadDemoEvidence, 700)
+        document.getElementById('status-content').innerHTML = `
+          <div class="status-panel confirmed fade">
+            <span class="status-icon">✈</span>
+            <div class="status-detail">
+              <strong>DEMO CONCLUÍDA ✓</strong>
+              <small>${userA} venceu a disputa e garantiu a reserva. ${userB} recebeu 409 por conflito de lock.</small>
+              <div class="demo-live">
+                <div class="demo-card winner">
+                  <strong>${userA}</strong>
+                  <span>✅ reserva aprovada</span>
+                </div>
+                <div class="demo-card loser">
+                  <strong>${userB}</strong>
+                  <span>❌ assento já bloqueado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+        return
+      }
+
+      if (resB.response.ok && resA.response.status === 409) {
+        const seatEl = document.getElementById('seat-' + selectedSeat.id)
+        if (seatEl) { seatEl.classList.remove('selected','available'); seatEl.classList.add('reserved') }
+        setTimeout(loadDemoEvidence, 700)
+        document.getElementById('status-content').innerHTML = `
+          <div class="status-panel confirmed fade">
+            <span class="status-icon">✈</span>
+            <div class="status-detail">
+              <strong>DEMO CONCLUÍDA ✓</strong>
+              <small>${userB} venceu a disputa e garantiu a reserva. ${userA} recebeu 409 por conflito de lock.</small>
+              <div class="demo-live">
+                <div class="demo-card winner">
+                  <strong>${userB}</strong>
+                  <span>✅ reserva aprovada</span>
+                </div>
+                <div class="demo-card loser">
+                  <strong>${userA}</strong>
+                  <span>❌ assento já bloqueado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+        return
+      }
+
+      if (resA.response.ok && resB.response.ok) {
+        setStatus('cancelled', 'DEMO INESPERADA', 'As duas requisições foram aceitas; isso indica que a simulação não encontrou o bloqueio esperado.')
+        return
+      }
+
+      setStatus('cancelled', 'DEMO FINALIZADA', 'O sistema bloqueou corretamente uma das tentativas para evitar venda duplicada do assento.')
+    } catch (e) {
+      setStatus('cancelled', 'ERRO DE DEMO', e.message)
+    }
+  }
+
   // ── Polling de status ────────────────────────────────────────────────────────
   async function pollStatus(id) {
     if (pollTimer) clearInterval(pollTimer)
@@ -676,6 +1049,7 @@
 
   // Carrega ao abrir
   searchFlights()
+  loadDemoEvidence()
 </script>
 </body>
 </html>

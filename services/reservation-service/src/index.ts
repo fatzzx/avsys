@@ -29,7 +29,7 @@ async function main() {
       service: 'reservation-service',
       port:    PORT,
     }))
-    .listen(PORT)
+    .listen({ port: PORT, hostname: '0.0.0.0' })
 
   console.log(`[reservation-service] http://localhost:${app.server?.port}`)
 }

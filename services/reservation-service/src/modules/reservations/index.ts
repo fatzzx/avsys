@@ -21,6 +21,8 @@ export const reservationsController = new Elysia({ prefix: '/reservations', name
   .post('/', ({ body, reservationService }) => reservationService.create(body), {
     body: 'reservation.CreateBody',
   })
+  // Resumo do estado atual do sistema
+  .get('/summary', ({ reservationService }) => reservationService.getSummary())
   // Buscar reserva por ID
   .get('/:reservationId', ({ params: { reservationId }, reservationService, set }) => {
     const reservation = reservationService.findById(reservationId)
