@@ -1,0 +1,121 @@
+%%%% sbc-template.sty
+%%%% Template for SBC (Sociedade Brasileira de Computação) conferences
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sbc-template}[2012/07/10]
+
+\RequirePackage{times}
+\RequirePackage{epsfig}
+\RequirePackage{graphicx}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{color}
+\RequirePackage{url}
+
+%% Page layout
+\setlength{\paperheight}{297mm}
+\setlength{\paperwidth}{210mm}
+
+\setlength{\textheight}{256mm}
+\setlength{\textwidth}{160mm}
+
+\setlength{\oddsidemargin}{0mm}
+\setlength{\evensidemargin}{0mm}
+\setlength{\topmargin}{-12mm}
+\setlength{\headheight}{0mm}
+\setlength{\headsep}{0mm}
+
+\setlength{\columnsep}{10mm}
+\setlength{\parindent}{1.27cm}
+
+%% Title
+\renewcommand{\maketitle}{%
+  \begin{center}
+    {\Large\bf \@title \par}%
+    \vspace{12pt}%
+    {\normalsize\bf \@author \par}%
+    \vspace{12pt}%
+    {\normalsize \theaddress \par}%
+  \end{center}
+  \vspace{12pt}%
+}
+
+%% Address / affiliation
+\newcount\@instnum
+\@instnum=0
+
+\newcommand{\theaddress}{}
+\newcommand{\@theaddress}{}
+
+\renewcommand{\address}[1]{%
+  \global\advance\@instnum by 1
+  \ifnum\@instnum=1
+    \gdef\theaddress{#1}%
+  \else
+    \expandafter\gdef\expandafter\theaddress\expandafter{%
+      \theaddress\\#1}%
+  \fi
+}
+
+\newcommand{\nextinstitute}{\\ \hspace*{0.5cm}}
+
+%% inst command
+\newcommand{\inst}[1]{\ensuremath{^{#1}}}
+
+%% email
+\newcommand{\email}[1]{\texttt{#1}}
+
+%% Abstract
+\renewenvironment{abstract}{%
+  \vspace{12pt}%
+  \noindent\textbf{Abstract.}\enspace\small\ignorespaces
+}{%
+  \par
+}
+
+%% Resumo (Portuguese abstract)
+\newenvironment{resumo}{%
+  \vspace{12pt}%
+  \noindent\textbf{Resumo.}\enspace\small\ignorespaces
+}{%
+  \par
+}
+
+%% Section formatting
+\renewcommand{\section}{%
+  \@startsection{section}{1}{\z@}%
+    {-12pt}%
+    {6pt}%
+    {\large\bf}%
+}
+
+\renewcommand{\subsection}{%
+  \@startsection{subsection}{2}{\z@}%
+    {-12pt}%
+    {6pt}%
+    {\normalsize\bf}%
+}
+
+\renewcommand{\subsubsection}{%
+  \@startsection{subsubsection}{3}{\z@}%
+    {-12pt}%
+    {6pt}%
+    {\normalsize\it}%
+}
+
+%% Figure and table captions
+\long\def\@makecaption#1#2{%
+  \vskip 6pt
+  \setbox\@tempboxa\hbox{{\small\bf #1.} {\small #2}}%
+  \ifdim \wd\@tempboxa >\hsize
+    {\small\bf #1.} {\small #2}\par
+  \else
+    \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip 6pt}
+
+%% No page numbers
+\pagestyle{empty}
+
+%% Spacing before paragraphs
+\setlength{\parskip}{6pt}

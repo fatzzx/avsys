@@ -25,9 +25,9 @@
 \author{Felipe Farias\inst{1}, Breno Moura\inst{1},
   Gabriel Aragão\inst{1}, Nicollas Matsuo\inst{1}}
 
-\address{Curso de Ciência da Computação\\
-  [Nome da Universidade] -- [Cidade] -- [Estado] -- Brasil
-  \email{\{felipe.farias, breno.moura, gabriel.aragao, nicollas.matsuo\}@[universidade].br}
+\address{Curso de Ciência da Computação -- SENAI CIMATEC\\
+  Av. Orlando Gomes, 1845 -- 41650-010 -- Salvador -- BA -- Brasil
+  \email{\{felipe.farias, breno.moura, gabriel.aragao, nicollas.matsuo\}@senaicimatec.edu.br}
 }
 
 \begin{document}
@@ -37,8 +37,8 @@
 \begin{abstract}
 This paper presents AVSYS, a distributed airline reservation system designed to handle
 high-concurrency scenarios while preventing double-booking anomalies. The system adopts
-a microservices architecture composed of three independent services — flight catalog,
-reservation management, and payment processing — orchestrated through an NGINX API
+a microservices architecture composed of three independent services (flight catalog,
+reservation management, and payment processing) orchestrated through an NGINX API
 Gateway. Consistency under concurrent access is achieved through a two-layer defense:
 a distributed mutex implemented with Redis atomic \texttt{SET NX EX} commands, and
 optimistic row versioning in SQLite. Asynchronous inter-service communication is handled
@@ -52,9 +52,8 @@ approximately 120 ms.
 \begin{resumo}
 Este artigo apresenta o AVSYS, um sistema distribuído de reserva de passagens aéreas
 projetado para cenários de alta concorrência com prevenção de double-booking. A
-arquitetura adota o padrão de microsserviços, composta por três serviços independentes
-— catálogo de voos, gerenciamento de reservas e processamento de pagamentos —
-orquestrados por um API Gateway NGINX. A consistência sob acesso concorrente é garantida
+arquitetura adota o padrão de microsserviços, composta por três serviços independentes (catálogo de voos, gerenciamento de reservas
+e processamento de pagamentos) orquestrados por um API Gateway NGINX. A consistência sob acesso concorrente é garantida
 por uma defesa em duas camadas: um mutex distribuído com Redis (\texttt{SET NX EX}
 atômico) e versionamento otimista de linhas no SQLite. A comunicação assíncrona
 entre serviços é realizada via RabbitMQ com filas duráveis e Dead Letter Exchange
@@ -73,8 +72,8 @@ A comercialização de passagens aéreas é um dos domínios mais exigentes para
 de informação: dezenas de milhares de usuários podem tentar reservar o mesmo conjunto
 limitado de assentos em intervalos de segundos, especialmente em lançamentos de
 promoções ou períodos de alta demanda. Nesse contexto, garantir que dois usuários não
-obtenham reservas válidas para o mesmo assento — problema conhecido como
-\textit{double-booking} — é um requisito de corretude crítico, não uma otimização
+obtenham reservas válidas para o mesmo assento (problema conhecido como
+\textit{double-booking}) é um requisito de corretude crítico, não uma otimização
 desejável \cite{gray92}.
 
 Sistemas monolíticos tradicionais contornam este problema com transações de banco de
@@ -83,7 +82,7 @@ microsserviços impõe novos desafios: serviços independentes possuem bancos de
 próprios, não há transação distribuída global, e múltiplas réplicas do mesmo serviço
 podem processar requisições simultaneamente sem coordenação implícita \cite{newman2015}.
 O teorema CAP \cite{brewer2000} formaliza a tensão entre consistência, disponibilidade
-e tolerância a particionamento — em um sistema distribuído, os três não podem ser
+e tolerância a particionamento; em um sistema distribuído, os três não podem ser
 garantidos simultaneamente.
 
 Este trabalho apresenta o \textbf{AVSYS} (\textit{Airline Reservation System}),
@@ -118,14 +117,14 @@ O AVSYS foi projetado segundo o padrão arquitetural de microsserviços \cite{ne
 no qual uma aplicação é decomposta em serviços pequenos, independentes e implantáveis
 de forma autônoma. Cada microsserviço encapsula um subdomínio de negócio bem definido,
 mantém seu próprio estado persistente e se comunica com os demais por meio de interfaces
-padronizadas — chamadas HTTP REST síncronas para operações onde o cliente aguarda
+padronizadas: chamadas HTTP REST síncronas para operações onde o cliente aguarda
 resposta, e mensagens assíncronas via fila para efeitos colaterais entre serviços.
 
 Essa abordagem confere ao sistema três propriedades fundamentais: (i)~\textbf{escalabilidade
-horizontal independente} — serviços com alta demanda podem ter múltiplas réplicas sem
-afetar os demais; (ii)~\textbf{isolamento de falhas} — a indisponibilidade de um
+horizontal independente}: serviços com alta demanda podem ter múltiplas réplicas sem
+afetar os demais; (ii)~\textbf{isolamento de falhas}: a indisponibilidade de um
 serviço não propaga falhas em cascata \cite{kleppmann2017}; e
-(iii)~\textbf{autonomia de dados} — cada serviço é proprietário exclusivo de seu banco
+(iii)~\textbf{autonomia de dados}: cada serviço é proprietário exclusivo de seu banco
 de dados, eliminando a necessidade de transações distribuídas entre serviços
 \cite{richardson2018}.
 
@@ -173,7 +172,7 @@ microsserviços em contêineres com recursos limitados.
 
 Sobre o Bun, o framework \textbf{ElysiaJS} \cite{saltyaom2023} oferece validação de
 tipos de ponta a ponta. Os esquemas TypeBox definem tanto a validação em tempo de
-execução quanto os tipos TypeScript — eliminando divergência entre o contrato da API
+execução quanto os tipos TypeScript, eliminando divergência entre o contrato da API
 e sua implementação. O padrão MVC orientado a domínios é adotado: cada módulo possui
 um \textit{controller} (instância Elysia com as rotas), um \textit{service} (lógica de
 negócio em classe abstrata) e um \textit{model} (esquemas TypeBox e tipos exportados).
@@ -187,7 +186,7 @@ opção por \texttt{PRAGMA journal\_mode=WAL} (Write-Ahead Logging) permite múl
 leituras concorrentes mesmo durante uma escrita. Para o controle de concorrência,
 emprega-se \textbf{versionamento otimista de linhas} \cite{bernstein1987}: a tabela de
 assentos possui uma coluna \texttt{version} incrementada a cada atualização. Ao
-reservar, a transação verifica se a versão lida ainda é corrente antes de atualizar —
+reservar, a transação verifica se a versão lida ainda é corrente antes de atualizar;
 se outro processo modificou o registro no intervalo, o UPDATE retorna \texttt{changes=0}
 e a operação é abortada.
 
@@ -235,7 +234,7 @@ O sistema é composto por três microsserviços com responsabilidades e fronteir
 bem delimitadas:
 
 \textbf{Serviço de Catálogo de Voos} (\texttt{flight-catalog}, porta 3001): Responsável
-pelo inventário de voos — companhias, aeroportos, horários, preços e mapas de assentos.
+pelo inventário de voos: companhias, aeroportos, horários, preços e mapas de assentos.
 Por ser o serviço com maior volume de leituras, mantém cache Redis dos resultados de
 busca (TTL 5 min). Consome os eventos \texttt{reservation.confirmed} e
 \texttt{reservation.cancelled} via RabbitMQ para manter o status dos assentos atualizado.
@@ -279,7 +278,7 @@ O fluxo completo de uma reserva ilustra a interação entre todos os componentes
 \end{enumerate}
 
 A separação entre camada síncrona (REST) e assíncrona (RabbitMQ) garante que o cliente
-receba resposta imediata — a latência percebida é da etapa de lock e transação, não do
+receba resposta imediata: a latência percebida é da etapa de lock e transação, não do
 processamento de pagamento.
 
 \subsection{Gerenciamento de Concorrência}
@@ -289,7 +288,7 @@ processamento de pagamento.
 Em sistemas de reserva com alta concorrência, dois usuários podem enviar
 simultaneamente requisições para o mesmo assento. Na ausência de coordenação, ambos
 leriam o assento como \texttt{available}, passariam pela validação e concluiriam a
-escrita — resultando em duas reservas válidas para um único assento
+escrita, resultando em duas reservas válidas para um único assento
 \cite{gray92}. Este é um caso clássico de \textit{lost update}, anomalia em que
 atualizações concorrentes se sobrescrevem silenciosamente.
 
@@ -299,7 +298,7 @@ A solução utiliza o Redis como mutex distribuído, baseando-se na atomicidade 
 \texttt{SET key value NX EX ttl} \cite{antirez2016}. O sufixo \texttt{NX}
 (\textit{Not eXists}) instrui o Redis a realizar a atribuição somente se a chave não
 existir; \texttt{EX ttl} define expiração automática. Como o Redis é
-\textit{single-threaded}, esta operação é garantidamente atômica — não há condição de
+\textit{single-threaded}, esta operação é garantidamente atômica; não há condição de
 corrida:
 
 \begin{lstlisting}[language={}]
@@ -385,8 +384,8 @@ SQLite, mantendo a latência de rejeição inferior a 5 ms.
 
 \subsection{Latência do Pipeline de Reserva}
 
-O pipeline completo de uma reserva — do \texttt{POST} inicial até a atualização do
-status para \texttt{confirmed} — é composto por duas fases com latências distintas:
+O pipeline completo de uma reserva, do \texttt{POST} inicial até a atualização do
+status para \texttt{confirmed}, é composto por duas fases com latências distintas:
 
 \begin{itemize}
   \item \textbf{Fase síncrona} (lock Redis + transação SQLite + publicação RabbitMQ):
@@ -397,7 +396,7 @@ status para \texttt{confirmed} — é composto por duas fases com latências dis
 \end{itemize}
 
 O uso do padrão assíncrono via RabbitMQ garante que o cliente não aguarde o
-processamento do pagamento — padrão fundamental em sistemas de e-commerce de alta
+processamento do pagamento, padrão fundamental em sistemas de e-commerce de alta
 disponibilidade \cite{kleppmann2017}.
 
 \subsection{Tolerância a Falhas e Idempotência}
@@ -437,7 +436,7 @@ A principal limitação da implementação atual é o uso de SQLite como banco d
 local: o arquivo \texttt{.db} não suporta múltiplos writers em contêineres distintos
 que compartilhem o mesmo volume. Portanto, ao escalar o \texttt{reservation-service}
 horizontalmente (múltiplas réplicas), é necessário garantir que cada réplica acesse
-seu próprio arquivo SQLite — o que torna o lock Redis ainda mais crítico como único
+seu próprio arquivo SQLite, o que torna o lock Redis ainda mais crítico como único
 ponto de coordenação distribuída. Em produção, o caminho recomendado seria migrar
 para PostgreSQL com particionamento de dados, mantendo o mecanismo de lock Redis.
 
@@ -465,7 +464,7 @@ tolerantes a falhas sem recorrer a transações distribuídas globais.
 O principal contribuição técnica é a estratégia de prevenção de double-booking em duas
 camadas: o lock distribuído Redis elimina a contenção antes do acesso ao banco de dados,
 enquanto o versionamento otimista SQLite serve como segunda barreira de segurança. Esta
-combinação garante corretude sem sacrificar a disponibilidade do sistema — requisição
+combinação garante corretude sem sacrificar a disponibilidade do sistema: requisição
 rejeitada por contenção recebe resposta em menos de 5 ms, sem bloquear outras
 operações.
 

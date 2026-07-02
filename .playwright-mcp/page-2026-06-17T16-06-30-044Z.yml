@@ -1,0 +1,329 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: Sistemas Distribuídos e Programação Paralela · 2026
+      - heading "AVSYS" [level=1] [ref=e7]
+      - paragraph [ref=e8]:
+        - text: Sistema Distribuído de Reserva de Passagens Aéreas
+        - text: com Prevenção de Double-Booking e Comunicação Assíncrona
+      - paragraph [ref=e9]: Felipe Farias · Breno Moura · Gabriel Aragão · Nicollas Matsuo
+    - generic:
+      - generic: "01"
+      - generic:
+        - paragraph: Seção 1
+        - heading "Introdução" [level=2]
+    - generic:
+      - paragraph: Introdução
+      - heading "Contextualização" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - generic: ~4B
+            - generic: passageiros aéreos em 2024
+          - generic:
+            - generic: < 1s
+            - generic: janela para reservar em promoções
+          - generic:
+            - generic: 10k+
+            - generic: usuários simultâneos em picos
+        - list:
+          - listitem:
+            - text: Venda de passagens é um dos domínios mais exigentes para sistemas de informação —
+            - strong: assentos limitados disputados em tempo real
+          - listitem:
+            - text: Lançamentos de promoções e alta temporada geram
+            - strong: picos de demanda simultânea
+            - text: que testam os limites de consistência
+          - listitem:
+            - text: A corretude do sistema não é opcional — garantir que
+            - strong: dois usuários não reservem o mesmo assento
+            - text: é requisito crítico de negócio
+    - generic:
+      - paragraph: Introdução
+      - heading "Definição do Problema" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic: ⚠ Double-Booking
+              - generic: Dois usuários obtêm reservas válidas para o mesmo assento — anomalia crítica de corretude que impacta diretamente a experiência do passageiro
+            - generic:
+              - generic: ↔ Lost Update
+              - generic: Sem coordenação, atualizações de múltiplos processos se sobrescrevem silenciosamente — a segunda escrita invalida a primeira
+            - generic:
+              - generic: 🔀 Race Condition
+              - generic: Dois processos leem "available" → passam na validação → ambos escrevem com sucesso — resultado incorreto sem erro explícito
+          - generic:
+            - generic:
+              - generic:
+                - generic: Usuário A
+                - generic: Usuário B
+              - generic:
+                - generic: READ S22 → available
+                - generic: ║
+                - generic: READ S22 → available
+              - generic:
+                - generic: INSERT reserva ✓
+                - generic: ║
+                - generic: INSERT reserva ✓
+              - generic: ⚠ DOUBLE-BOOKING
+              - paragraph: sem coordenação → ambos passam na validação
+    - generic:
+      - paragraph: Introdução
+      - heading "Motivação" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - paragraph: "Sistemas monolíticos resolvem o problema com transações globais e locks pessimistas. Microsserviços impõem novos desafios:"
+            - list:
+              - listitem:
+                - strong: Bancos de dados independentes
+                - text: por serviço — não existe transação distribuída global
+              - listitem:
+                - strong: Múltiplas réplicas
+                - text: do mesmo serviço processam requisições sem coordenação implícita
+              - listitem:
+                - strong: Teorema CAP
+                - text: — em sistemas distribuídos, consistência, disponibilidade e tolerância a partições não podem ser garantidas simultaneamente
+          - generic:
+            - generic:
+              - paragraph: Teorema CAP
+              - generic:
+                - generic: Consistência
+                - generic: Disponibilidade
+                - generic: Tolerância a partições
+              - paragraph: Escolha apenas dois em um sistema distribuído real
+            - generic:
+              - generic: "💡 Nossa escolha: CP"
+              - generic:
+                - text: Priorizamos
+                - strong: consistência
+                - text: sobre disponibilidade total — retornar 409 em vez de aceitar uma reserva inválida é o comportamento correto
+    - generic:
+      - paragraph: Introdução
+      - heading "Objetivos do Projeto" [level=2]
+      - generic:
+        - list:
+          - listitem:
+            - strong: Arquitetura de microsserviços
+            - text: com fronteiras de dados claras, cada serviço proprietário exclusivo do seu banco e comunicação assíncrona via eventos
+          - listitem:
+            - strong: Prevenção de double-booking
+            - text: via lock distribuído Redis + versionamento otimista SQLite — defesa em duas camadas independentes
+          - listitem:
+            - strong: Comunicação assíncrona com RabbitMQ
+            - text: para desacoplar o processamento de pagamentos do fluxo de reserva, reduzindo latência percebida
+          - listitem:
+            - strong: Containerização completa com Docker Compose
+            - text: — health checks, orquestração de dependências e volumes persistentes
+        - generic:
+          - generic: 3 Microsserviços
+          - generic: Redis Lock
+          - generic: RabbitMQ
+          - generic: Docker Compose
+          - generic: SQLite WAL
+          - generic: Bun · ElysiaJS · TypeScript
+    - generic:
+      - paragraph: Introdução
+      - heading "Relevância da Solução" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - generic: 🏭 Padrões de Produção
+            - generic: Redis distributed lock e optimistic locking são usados em escala por Amazon, Booking.com e Airbnb — a solução replica práticas estabelecidas da indústria
+          - generic:
+            - generic: 🛡 Defense in Depth
+            - generic: "Duas barreiras independentes: mutex Redis elimina contenção antes de acessar o banco; versionamento SQLite captura casos extremos como expiração de TTL"
+          - generic:
+            - generic: ⚡ Latência < 120 ms
+            - generic: Pipeline completo de reserva (lock + transação + evento) em ~120 ms — o pagamento é assíncrono e não bloqueia a resposta ao cliente
+          - generic:
+            - generic: 📐 Generalização
+            - generic: Os padrões aplicados são válidos para qualquer sistema de reserva com alta concorrência — hotéis, shows, consultas médicas, vagas de estacionamento
+    - generic:
+      - generic: "02"
+      - generic:
+        - paragraph: Seção 2
+        - heading "Metodologia" [level=2]
+    - generic:
+      - paragraph: Metodologia
+      - heading "Arquitetura do Sistema" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - generic: Browser
+            - text: │ HTTP :80 ▼
+            - generic: ┌───────── NGINX :80 ──────────┐
+            - generic: │ API Gateway · Rate Limiting │
+            - generic: └────┬─────────────┬────────────┘
+            - text: │ │ │ ▼ ▼ ▼
+            - generic: flight-catalog reserv. payment
+            - generic: :3001 :3002 :3003
+            - text: │ │ │ └──────┬──────┘ │ │ ┌──────────┘ ▼ ▼
+            - generic: Redis :6379
+            - generic: RabbitMQ :5672
+            - text: (lock+cache) (airline.events)
+          - generic:
+            - list:
+              - listitem:
+                - strong: Padrão Microsserviços
+                - text: — cada serviço encapsula um subdomínio de negócio, tem banco próprio e é independentemente implantável
+              - listitem:
+                - strong: NGINX como API Gateway
+                - text: — roteamento por prefixo, rate limiting (20 req/s/IP), balanceamento least_conn
+              - listitem:
+                - strong: Duas redes Docker isoladas
+                - text: — airline-public (NGINX ↔ serviços) e airline-internal (serviços ↔ Redis/RabbitMQ)
+              - listitem:
+                - strong: REST síncrono + AMQP assíncrono
+                - text: — síncrono onde o cliente aguarda, assíncrono para efeitos colaterais entre serviços
+    - generic:
+      - paragraph: Metodologia
+      - heading "Tecnologias Utilizadas" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - generic: ⚡ Bun + ElysiaJS
+            - generic: "Runtime JS/TS nativo — executa TypeScript sem transpilação. 2,5–3× mais rápido que Node.js (TechEmpower 2024). ElysiaJS: validação TypeBox end-to-end com tipos gerados automaticamente."
+          - generic:
+            - generic: 🗄 SQLite (bun:sqlite)
+            - generic: "Driver nativo embutido, zero dependências. WAL mode: leituras concorrentes durante escritas. PRAGMA foreign_keys e busy_timeout. Versionamento otimista com coluna version."
+          - generic:
+            - generic: 🔴 Redis (ioredis)
+            - generic:
+              - strong: "Lock distribuído:"
+              - text: SET NX EX — atômico em single-thread.
+              - strong: "Cache:"
+              - text: buscas TTL 5 min.
+              - strong: "Idempotência:"
+              - text: pagamentos TTL 24 h. Release via script Lua.
+          - generic:
+            - generic: 🐰 RabbitMQ (amqplib)
+            - generic: "Topic exchange airline.events. Filas duráveis, prefetch=1, Dead Letter Exchange para mensagens com falha. Routing key no formato {agregado}.{evento}."
+    - generic:
+      - paragraph: Metodologia
+      - heading "Organização dos Microsserviços" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - generic: ✈ flight-catalog
+            - generic:
+              - generic: :3001
+              - paragraph: Inventário de voos, assentos, preços e horários.
+              - paragraph: Cache Redis 5 min por parâmetro de busca
+              - paragraph:
+                - text: "Consome:"
+                - emphasis: reservation.confirmed, reservation.cancelled
+              - paragraph: "DB: airlines, airports, flights, seats"
+          - generic:
+            - generic: 🔒 reservation-service
+            - generic:
+              - generic: :3002
+              - paragraph: Orquestra o fluxo crítico de reserva com lock e transação atômica.
+              - paragraph: Redis lock + SQLite versionamento otimista
+              - paragraph:
+                - text: "Publica:"
+                - emphasis: payment.requested, reservation.confirmed/cancelled
+              - paragraph: "DB: reservations, seats (cópia local), events"
+          - generic:
+            - generic: 💳 payment-service
+            - generic:
+              - generic: :3003
+              - paragraph: Consumidor assíncrono — processa pagamentos sem bloquear a reserva.
+              - paragraph: Idempotência via Redis (TTL 24 h) — sem duplicatas em re-entrega
+              - paragraph: "Taxa de sucesso: 90% (simulado)"
+              - paragraph: "DB: payment_orders, notifications"
+    - generic:
+      - paragraph: Metodologia
+      - heading "Estrutura dos Contêineres e Banco de Dados" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - paragraph: 6 Contêineres Docker Compose
+            - generic:
+              - generic: nginx
+              - generic: flight-catalog
+              - generic: reservation-service
+              - generic: payment-service
+              - generic: redis
+              - generic: rabbitmq
+            - list:
+              - listitem:
+                - strong: depends_on + service_healthy
+                - text: — NGINX só sobe após todos os serviços passarem no health check
+              - listitem:
+                - strong: Volumes nomeados
+                - text: para persistência dos três bancos SQLite entre reinicializações
+              - listitem:
+                - strong: 2 redes isoladas
+                - text: — Redis e RabbitMQ invisíveis ao gateway
+          - generic:
+            - generic: "flight-catalog → flights.db reservation-service → reservations.db payment-service → payments.db PRAGMAs (todos os serviços): journal_mode = WAL ← leituras concorrentes foreign_keys = ON ← integridade referencial busy_timeout = 5000 ← retry automático em lock Controle de concorrência: coluna version + UPDATE … WHERE version = ? → changes = 0 ⟹ ROLLBACK (anomalia detectada)"
+    - generic:
+      - paragraph: Metodologia
+      - heading "Fluxo de Comunicação" [level=2]
+      - generic:
+        - generic: "① POST /api/reservations → NGINX → reservation-service ② Redis: SET lock:seat:F1:S22 <token> NX EX 30 → OK ✓ ou 409 Conflict ③ SQLite BEGIN IMMEDIATE: SELECT seat (version=7) → INSERT reserva → UPDATE seats WHERE version=7 ④ RabbitMQ: publish payment.requested → HTTP 202 Accepted (cliente liberado) ⑤ Redis EVAL Lua: DEL lock (somente se owner do token) ─────────────────── assíncrono ─────────────────── ⑥ payment-service consome payment.requested → processa → publica payment.succeeded / payment.failed ⑦ reservation-service consome resultado → atualiza reserva (confirmed / cancelled) ⑧ flight-catalog consome reservation.confirmed → UPDATE seat status = sold"
+        - generic:
+          - generic:
+            - generic: ~30 ms
+            - generic: Redis SET NX EX
+          - generic:
+            - generic: ~60 ms
+            - generic: SQLite BEGIN IMMEDIATE
+          - generic:
+            - generic: ~120 ms
+            - generic: pipeline síncrono total
+    - generic:
+      - paragraph: Metodologia
+      - heading "Ferramentas e Estratégia de Testes" [level=2]
+      - generic:
+        - generic:
+          - generic:
+            - paragraph: Stack completo
+            - table:
+              - rowgroup:
+                - row "Camada Ferramenta":
+                  - columnheader "Camada"
+                  - columnheader "Ferramenta"
+                - row "Runtime Bun + TypeScript":
+                  - cell "Runtime"
+                  - cell "Bun + TypeScript"
+                - row "Framework API ElysiaJS + TypeBox":
+                  - cell "Framework API"
+                  - cell "ElysiaJS + TypeBox"
+                - row "Banco de dados SQLite (bun:sqlite)":
+                  - cell "Banco de dados"
+                  - cell "SQLite (bun:sqlite)"
+                - row "Cache / Lock Redis + ioredis":
+                  - cell "Cache / Lock"
+                  - cell "Redis + ioredis"
+                - row "Mensageria RabbitMQ + amqplib":
+                  - cell "Mensageria"
+                  - cell "RabbitMQ + amqplib"
+                - row "API Gateway NGINX":
+                  - cell "API Gateway"
+                  - cell "NGINX"
+                - row "Orquestração Docker Compose":
+                  - cell "Orquestração"
+                  - cell "Docker Compose"
+          - generic:
+            - paragraph: Estratégia de testes
+            - list:
+              - listitem:
+                - strong: Teste funcional
+                - text: "via frontend — fluxo completo: busca → seleção de assento → reserva → consulta de status"
+              - listitem:
+                - strong: Teste de concorrência
+                - text: — múltiplas requisições simultâneas ao mesmo assento, validando zero double-bookings sob carga
+              - listitem:
+                - strong: Painel de arquitetura em tempo real
+                - text: — visualização de lock.acquired, lock.failed, db.transaction e rabbitmq.published via polling de eventos
+              - listitem:
+                - strong: Resultado
+                - text: ": 0 double-bookings confirmado sob carga concorrente simulada"
+  - generic [ref=e10]:
+    - button "←" [ref=e11] [cursor=pointer]
+    - generic [ref=e12]: 1 / 14
+    - button "→" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]: ← → navegar · F fullscreen
